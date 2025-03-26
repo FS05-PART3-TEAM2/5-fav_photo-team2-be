@@ -8,13 +8,14 @@ const prisma = new PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET || "secret-key";
 const JWT_EXPIRES_IN = "1h";
 
-export const signup = async (req: Request, res: Response) => {
+export const signup = async (req: Request, res: Response): Promise<void> => {
   const { email, password, nickname } = req.body;
 
   try {
     const existUser = await prisma.user.findUnique({ where: { email } });
     if (existUser) {
-      return res.status(409).json({ message: "존재하는 이메일입니다." });
+      res.status(409).json({ message: "존재하는 이메일입니다." });
+      return;
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -24,13 +25,15 @@ export const signup = async (req: Request, res: Response) => {
         email,
         password: hashedPassword,
         nickname,
-        role: "USER",
+        role: "USER", //기본 권한은 일단 유저
       },
     });
 
-    return res.status(201).json({ message: "회원가입 성공", userId: user.id });
+    res.status(201).json({ message: "회원가입 성공", userId: user.id });
+    return;
   } catch (error) {
-    return res.status(500).json({ message: error });
+    res.status(500).json({ message: error });
+    return;
   }
 };
 
@@ -40,16 +43,18 @@ export const login = async (req: Request, res: Response) => {
   try {
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
-      return res
+      res
         .status(401)
         .json({ message: "이메일 또는 비밀번호가 잘못되었습니다." });
+      return;
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res
+      res
         .status(401)
         .json({ message: "이메일 또는 비밀번호가 잘못되었습니다." });
+      return;
     }
 
     const accessToken = jwt.sign(
@@ -60,7 +65,7 @@ export const login = async (req: Request, res: Response) => {
       }
     );
 
-    return res.status(200).json({
+    res.status(200).json({
       message: "로그인 성공",
       token: accessToken,
       user: {
@@ -69,7 +74,9 @@ export const login = async (req: Request, res: Response) => {
         nickname: user.nickname,
       },
     });
+    return;
   } catch (error) {
-    return res.status(500).json({ message: "서버 오류", error });
+    res.status(500).json({ message: "서버 오류", error });
+    return;
   }
 };
