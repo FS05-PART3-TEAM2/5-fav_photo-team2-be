@@ -19,6 +19,15 @@ model User {
   updatedAt DateTime @updatedAt
 
   auth              Auth?
+  newTransactions   TransactionLog[] @relation("newOwnerId")
+  oldTransactions   TransactionLog[] @relation("oldOwnerId")  
+  /// 쿼리 예시 
+  /// const userWithTransactions = await prisma.user.findUnique({
+  ///   where: { id: "유저Id" },
+  ///   include: { oldTransactions: true },
+  /// });
+  userPhotoCards     UserPhotoCard[] 
+  saleCards          SaleCard[]
 }
 
 
@@ -45,42 +54,50 @@ model PhotoCard {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  userPhotoCards     UserPhotoCard[] 
 }
 
 
 model UserPhotoCard {
   id           String   @id @default(uuid())
   ownerId      String
-  photocardId  String
+  photoCardId  String
   quantity     Int
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
+  owner         User      @relation(fields: [ownerId], references: [id])
+  photoCard     PhotoCard @relation(fields: [photoCardId], references: [id])
+  salePhotoCard SaleCard[]
 }
 
 
 model SaleCard {
   id          String   @id @default(uuid())
   sellerId    String
-  instanceId  String
+  photoCardId String
   quantity    Int
   price       Int
   status      String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  seller       User          @relation(fields: [sellerId],  references: [id])
+  photoCard    UserPhotoCard @relation(fields: [photoCardId], references: [id])
 }
 
 model TransactionLog {
-  id            String   @id @default(uuid())
-  saleCardId    String
-  buyerId       String
-  sellerId      String
-  photocardId   String
-  quantity      Int
-  totalPrice    Int
-  createdAt     DateTime @default(now())
+  id               String   @id @default(uuid())
+  transactionType  String
+  transactionId    String
+  newOwnerId       String
+  oldOwnerId       String
+  quantity         Int
+  totalPrice       Int
+  createdAt        DateTime @default(now())
 
+  newOwner         User @relation("newOwnerId", fields: [newOwnerId], references: [id])
+  oldOwner         User @relation("oldOwnerId", fields: [oldOwnerId], references: [id])
 }
 
 model ExchangeOffer {
@@ -101,7 +118,6 @@ model Notification {
   type      String
   userId    String
   message   String
-  isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
   readAt    DateTime?
 
@@ -109,7 +125,7 @@ model Notification {
 
 model PointHistory {
   id           String   @id @default(uuid())
-  user_id      String
+  userId      String
   amount       Int
   resourceType String
   resourceId   String
