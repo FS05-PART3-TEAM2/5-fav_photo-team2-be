@@ -55,6 +55,7 @@ model PhotoCard {
   updatedAt   DateTime @updatedAt
 
   userPhotoCards     UserPhotoCard[] 
+  salePhotoCard      SaleCard[]
 }
 
 
@@ -68,7 +69,7 @@ model UserPhotoCard {
 
   owner         User      @relation(fields: [ownerId], references: [id])
   photoCard     PhotoCard @relation(fields: [photoCardId], references: [id])
-  salePhotoCard SaleCard[]
+
 }
 
 
@@ -83,7 +84,7 @@ model SaleCard {
   updatedAt   DateTime @updatedAt
 
   seller       User          @relation(fields: [sellerId],  references: [id])
-  photoCard    UserPhotoCard @relation(fields: [photoCardId], references: [id])
+  photoCard    PhotoCard     @relation(fields: [photoCardId], references: [id])
 }
 
 model TransactionLog {
