@@ -18,16 +18,6 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  auth              Auth?
-  newTransactions   TransactionLog[] @relation("newOwnerId")
-  oldTransactions   TransactionLog[] @relation("oldOwnerId")  
-  /// 쿼리 예시 
-  /// const userWithTransactions = await prisma.user.findUnique({
-  ///   where: { id: "유저Id" },
-  ///   include: { oldTransactions: true },
-  /// });
-  userPhotoCards     UserPhotoCard[] 
-  saleCards          SaleCard[]
 }
 
 
@@ -38,7 +28,6 @@ model Auth {
   expiresAt    DateTime
   createdAt    DateTime @default(now())
 
-  user         User     @relation(fields: [userId], references: [id])
 }
 
 
@@ -54,8 +43,6 @@ model PhotoCard {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  userPhotoCards     UserPhotoCard[] 
-  salePhotoCard      SaleCard[]
 }
 
 
@@ -66,9 +53,6 @@ model UserPhotoCard {
   quantity     Int
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
-
-  owner         User      @relation(fields: [ownerId], references: [id])
-  photoCard     PhotoCard @relation(fields: [photoCardId], references: [id])
 
 }
 
@@ -83,8 +67,6 @@ model SaleCard {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  seller       User          @relation(fields: [sellerId],  references: [id])
-  photoCard    PhotoCard     @relation(fields: [photoCardId], references: [id])
 }
 
 model TransactionLog {
@@ -97,8 +79,6 @@ model TransactionLog {
   totalPrice       Int
   createdAt        DateTime @default(now())
 
-  newOwner         User @relation("newOwnerId", fields: [newOwnerId], references: [id])
-  oldOwner         User @relation("oldOwnerId", fields: [oldOwnerId], references: [id])
 }
 
 model ExchangeOffer {
