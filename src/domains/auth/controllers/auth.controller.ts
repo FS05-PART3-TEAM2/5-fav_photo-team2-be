@@ -57,6 +57,7 @@ export const login = async (req: Request, res: Response) => {
       return;
     }
 
+    //토큰 생성
     const accessToken = jwt.sign(
       { userId: user.id, role: user.role },
       JWT_SECRET,
@@ -64,6 +65,12 @@ export const login = async (req: Request, res: Response) => {
         expiresIn: JWT_EXPIRES_IN,
       }
     );
+    res.cookie("token", accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production", //https 환경에서만 사용
+      sameSite: "lax", //csrf 공격 방지
+      maxAge: 60 * 60 * 1000,
+    });
 
     res.status(200).json({
       message: "로그인 성공",
@@ -79,4 +86,9 @@ export const login = async (req: Request, res: Response) => {
     res.status(500).json({ message: "서버 오류", error });
     return;
   }
+};
+
+export const logout = (req: Request, res: Response) => {
+  res.clearCookie("token");
+  res.status(200).json({ message: "로그아웃 성공" });
 };
