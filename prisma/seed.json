@@ -1,0 +1,458 @@
+{
+  "users": [
+    {
+      "id": "1f4061dc-23fd-4bb2-9384-bd4a3dd8fe62",
+      "email": "syga@test.com",
+      "nickname": "syga",
+      "password": "$2b$10$aDniPMZzYwQPNm6I7ztv2eMbf2kHUu0rG2AUZqhySMDXs75XtWd72",
+      "role": "SUPER_ADMIN",
+      "points": 0,
+      "createdAt": "2025-03-31T08:26:30.826Z",
+      "updatedAt": "2025-03-31T08:26:30.826Z"
+    },
+    {
+      "id": "2e2c8b6b-85e7-439a-a939-3143c4d202ca",
+      "email": "minam@test.com",
+      "nickname": "미남",
+      "password": "$2b$10$j26Qz2i2MWUjz45FG/ej8.R07RchHyZ7y1mdJjNz4fLB8nqxXkrJe",
+      "role": "USER",
+      "points": 0,
+      "createdAt": "2025-03-31T09:22:08.072Z",
+      "updatedAt": "2025-03-31T09:22:08.072Z"
+    },
+    {
+      "id": "41ddaf11-cb4b-46ed-ac82-67929b0cc43a",
+      "email": "igris@test.com",
+      "nickname": "igris",
+      "password": "$2b$10$1QXhJ6LH0tNCQrQPu/iH8eXSWrE/1lMZMm3gLg0s.i7b5ULltaBju",
+      "role": "USER",
+      "points": 0,
+      "createdAt": "2025-03-31T09:26:54.416Z",
+      "updatedAt": "2025-03-31T09:26:54.416Z"
+    },
+    {
+      "id": "572a1025-33ad-47d9-b2fe-bad4b95423fd",
+      "email": "test@test.com",
+      "nickname": "test",
+      "password": "$2b$10$S6qC9dzSuMVuipads3P4YuT2W2brBPbIBX2cvQ34d4nO2OVleZHV6",
+      "role": "USER",
+      "points": 0,
+      "createdAt": "2025-03-31T09:24:49.192Z",
+      "updatedAt": "2025-03-31T09:24:49.192Z"
+    },
+    {
+      "id": "82a0e33e-fb26-4b84-8f9b-2b3502c41333",
+      "email": "bellion@test.com",
+      "nickname": "bellion",
+      "password": "$2b$10$7HDpsenVwqxUfCtJrKIvJue.U3E9AAnSnYvNsDo1cs/gv0GVYgYva",
+      "role": "USER",
+      "points": 0,
+      "createdAt": "2025-03-31T09:27:30.852Z",
+      "updatedAt": "2025-03-31T09:27:30.852Z"
+    },
+    {
+      "id": "d5542e17-d6d8-4b19-ac4c-69494a413208",
+      "email": "beru@test.com",
+      "nickname": "beru",
+      "password": "$2b$10$O5gOC7NVhpQc698CuFv.uuLAyQg.Sn31L5Z5q1BVcIIzr2i6BMJcK",
+      "role": "USER",
+      "points": 0,
+      "createdAt": "2025-03-31T09:26:05.079Z",
+      "updatedAt": "2025-03-31T09:26:05.079Z"
+    }
+  ],
+  "photoCards": [
+    {
+      "id": "8a446450-92a3-4a06-b3e7-a18175d307c8",
+      "creatorId": "1f4061dc-23fd-4bb2-9384-bd4a3dd8fe62",
+      "name": "Sparkling Star",
+      "genre": "POP",
+      "grade": "A",
+      "price": 1200,
+      "description": "This is a sample card.",
+      "imageUrl": "https://example.com/card-1-1.jpg",
+      "createdAt": "2025-03-31T10:12:37.062305",
+      "updatedAt": "2025-03-31T10:12:37.062305"
+    },
+    {
+      "id": "88e37ee8-531b-4ad9-a6cf-d53875446279",
+      "creatorId": "1f4061dc-23fd-4bb2-9384-bd4a3dd8fe62",
+      "name": "Silent Rain",
+      "genre": "BALLAD",
+      "grade": "B",
+      "price": 800,
+      "description": "This is another sample card.",
+      "imageUrl": "https://example.com/card-1-2.jpg",
+      "createdAt": "2025-03-31T10:12:37.062305",
+      "updatedAt": "2025-03-31T10:12:37.062305"
+    },
+    {
+      "id": "98b1c15d-39aa-4c85-8322-e537dce8dd70",
+      "creatorId": "2e2c8b6b-85e7-439a-a939-3143c4d202ca",
+      "name": "Silent Rain",
+      "genre": "BALLAD",
+      "grade": "B",
+      "price": 800,
+      "description": "This is a sample card.",
+      "imageUrl": "https://example.com/card-2-1.jpg",
+      "createdAt": "2025-03-31T10:12:37.062305",
+      "updatedAt": "2025-03-31T10:12:37.062305"
+    },
+    {
+      "id": "20a7e120-1454-4864-a8c6-ad8e4f2d82a2",
+      "creatorId": "2e2c8b6b-85e7-439a-a939-3143c4d202ca",
+      "name": "Electric Dream",
+      "genre": "EDM",
+      "grade": "S",
+      "price": 2000,
+      "description": "This is another sample card.",
+      "imageUrl": "https://example.com/card-2-2.jpg",
+      "createdAt": "2025-03-31T10:12:37.062305",
+      "updatedAt": "2025-03-31T10:12:37.062305"
+    },
+    {
+      "id": "2085d0fe-c6db-4227-beb0-8c51e8b87121",
+      "creatorId": "41ddaf11-cb4b-46ed-ac82-67929b0cc43a",
+      "name": "Electric Dream",
+      "genre": "EDM",
+      "grade": "S",
+      "price": 2000,
+      "description": "This is a sample card.",
+      "imageUrl": "https://example.com/card-3-1.jpg",
+      "createdAt": "2025-03-31T10:12:37.062305",
+      "updatedAt": "2025-03-31T10:12:37.062305"
+    },
+    {
+      "id": "87d20e41-ad05-4257-9d73-67af3234fe97",
+      "creatorId": "41ddaf11-cb4b-46ed-ac82-67929b0cc43a",
+      "name": "Golden Vibes",
+      "genre": "HIPHOP",
+      "grade": "A",
+      "price": 1500,
+      "description": "This is another sample card.",
+      "imageUrl": "https://example.com/card-3-2.jpg",
+      "createdAt": "2025-03-31T10:12:37.062305",
+      "updatedAt": "2025-03-31T10:12:37.062305"
+    },
+    {
+      "id": "ac821788-8a66-4532-86a4-4d0d70e913e6",
+      "creatorId": "572a1025-33ad-47d9-b2fe-bad4b95423fd",
+      "name": "Golden Vibes",
+      "genre": "HIPHOP",
+      "grade": "A",
+      "price": 1500,
+      "description": "This is a sample card.",
+      "imageUrl": "https://example.com/card-4-1.jpg",
+      "createdAt": "2025-03-31T10:12:37.062305",
+      "updatedAt": "2025-03-31T10:12:37.062305"
+    },
+    {
+      "id": "3766b871-80a9-4162-8c75-6584e8886be4",
+      "creatorId": "572a1025-33ad-47d9-b2fe-bad4b95423fd",
+      "name": "Ocean Breeze",
+      "genre": "R&B",
+      "grade": "C",
+      "price": 600,
+      "description": "This is another sample card.",
+      "imageUrl": "https://example.com/card-4-2.jpg",
+      "createdAt": "2025-03-31T10:12:37.062305",
+      "updatedAt": "2025-03-31T10:12:37.062305"
+    },
+    {
+      "id": "d65c980c-89d0-4024-92d8-016a22570d73",
+      "creatorId": "82a0e33e-fb26-4b84-8f9b-2b3502c41333",
+      "name": "Ocean Breeze",
+      "genre": "R&B",
+      "grade": "C",
+      "price": 600,
+      "description": "This is a sample card.",
+      "imageUrl": "https://example.com/card-5-1.jpg",
+      "createdAt": "2025-03-31T10:12:37.062305",
+      "updatedAt": "2025-03-31T10:12:37.062305"
+    },
+    {
+      "id": "e035146e-a195-4ad0-9230-123ec6c13333",
+      "creatorId": "82a0e33e-fb26-4b84-8f9b-2b3502c41333",
+      "name": "Moonlight Sonata",
+      "genre": "CLASSIC",
+      "grade": "S",
+      "price": 2500,
+      "description": "This is another sample card.",
+      "imageUrl": "https://example.com/card-5-2.jpg",
+      "createdAt": "2025-03-31T10:12:37.062305",
+      "updatedAt": "2025-03-31T10:12:37.062305"
+    },
+    {
+      "id": "7c18083f-e37a-467e-867d-813e6b0abad9",
+      "creatorId": "d5542e17-d6d8-4b19-ac4c-69494a413208",
+      "name": "Moonlight Sonata",
+      "genre": "CLASSIC",
+      "grade": "S",
+      "price": 2500,
+      "description": "This is a sample card.",
+      "imageUrl": "https://example.com/card-6-1.jpg",
+      "createdAt": "2025-03-31T10:12:37.062305",
+      "updatedAt": "2025-03-31T10:12:37.062305"
+    },
+    {
+      "id": "764c1050-1f7b-4045-b4f9-9a58bf06dbff",
+      "creatorId": "d5542e17-d6d8-4b19-ac4c-69494a413208",
+      "name": "Sparkling Star",
+      "genre": "POP",
+      "grade": "A",
+      "price": 1200,
+      "description": "This is another sample card.",
+      "imageUrl": "https://example.com/card-6-2.jpg",
+      "createdAt": "2025-03-31T10:12:37.062305",
+      "updatedAt": "2025-03-31T10:12:37.062305"
+    }
+  ],
+  "userPhotoCards": [
+    {
+      "id": "ba939c25-4a5a-42b6-a2ab-243f2e7b63c2",
+      "ownerId": "1f4061dc-23fd-4bb2-9384-bd4a3dd8fe62",
+      "photoCardId": "8a446450-92a3-4a06-b3e7-a18175d307c8",
+      "quantity": 1,
+      "createdAt": "2025-03-31T10:12:37.062305",
+      "updatedAt": "2025-03-31T10:12:37.062305"
+    },
+    {
+      "id": "a961476c-8971-4609-9b4c-755f2ec480ce",
+      "ownerId": "1f4061dc-23fd-4bb2-9384-bd4a3dd8fe62",
+      "photoCardId": "88e37ee8-531b-4ad9-a6cf-d53875446279",
+      "quantity": 2,
+      "createdAt": "2025-03-31T10:12:37.062305",
+      "updatedAt": "2025-03-31T10:12:37.062305"
+    },
+    {
+      "id": "4612c0df-8b65-43d1-935a-0e3c7b49d7c2",
+      "ownerId": "2e2c8b6b-85e7-439a-a939-3143c4d202ca",
+      "photoCardId": "98b1c15d-39aa-4c85-8322-e537dce8dd70",
+      "quantity": 1,
+      "createdAt": "2025-03-31T10:12:37.062305",
+      "updatedAt": "2025-03-31T10:12:37.062305"
+    },
+    {
+      "id": "57eb31f7-a5ac-4577-8000-f384c4a80a2f",
+      "ownerId": "2e2c8b6b-85e7-439a-a939-3143c4d202ca",
+      "photoCardId": "20a7e120-1454-4864-a8c6-ad8e4f2d82a2",
+      "quantity": 2,
+      "createdAt": "2025-03-31T10:12:37.062305",
+      "updatedAt": "2025-03-31T10:12:37.062305"
+    },
+    {
+      "id": "6fc214c2-89fa-4da9-af44-d31f891ebd78",
+      "ownerId": "41ddaf11-cb4b-46ed-ac82-67929b0cc43a",
+      "photoCardId": "2085d0fe-c6db-4227-beb0-8c51e8b87121",
+      "quantity": 1,
+      "createdAt": "2025-03-31T10:12:37.062305",
+      "updatedAt": "2025-03-31T10:12:37.062305"
+    },
+    {
+      "id": "4dedd91b-a351-473d-abd9-9bd34d050d08",
+      "ownerId": "41ddaf11-cb4b-46ed-ac82-67929b0cc43a",
+      "photoCardId": "87d20e41-ad05-4257-9d73-67af3234fe97",
+      "quantity": 2,
+      "createdAt": "2025-03-31T10:12:37.062305",
+      "updatedAt": "2025-03-31T10:12:37.062305"
+    },
+    {
+      "id": "2417930c-20c9-4581-b12b-bcfdcd1b8473",
+      "ownerId": "572a1025-33ad-47d9-b2fe-bad4b95423fd",
+      "photoCardId": "ac821788-8a66-4532-86a4-4d0d70e913e6",
+      "quantity": 1,
+      "createdAt": "2025-03-31T10:12:37.062305",
+      "updatedAt": "2025-03-31T10:12:37.062305"
+    },
+    {
+      "id": "9db5a818-779a-4fb1-980d-2856116f86b7",
+      "ownerId": "572a1025-33ad-47d9-b2fe-bad4b95423fd",
+      "photoCardId": "3766b871-80a9-4162-8c75-6584e8886be4",
+      "quantity": 2,
+      "createdAt": "2025-03-31T10:12:37.062305",
+      "updatedAt": "2025-03-31T10:12:37.062305"
+    },
+    {
+      "id": "b4ca3dc0-0cba-4303-8d02-d8337f746ca1",
+      "ownerId": "82a0e33e-fb26-4b84-8f9b-2b3502c41333",
+      "photoCardId": "d65c980c-89d0-4024-92d8-016a22570d73",
+      "quantity": 1,
+      "createdAt": "2025-03-31T10:12:37.062305",
+      "updatedAt": "2025-03-31T10:12:37.062305"
+    },
+    {
+      "id": "7a6bb782-e930-46ec-b65d-415afd96859c",
+      "ownerId": "82a0e33e-fb26-4b84-8f9b-2b3502c41333",
+      "photoCardId": "e035146e-a195-4ad0-9230-123ec6c13333",
+      "quantity": 2,
+      "createdAt": "2025-03-31T10:12:37.062305",
+      "updatedAt": "2025-03-31T10:12:37.062305"
+    },
+    {
+      "id": "19b7d522-a5de-4a33-99f2-50d033ad4245",
+      "ownerId": "d5542e17-d6d8-4b19-ac4c-69494a413208",
+      "photoCardId": "7c18083f-e37a-467e-867d-813e6b0abad9",
+      "quantity": 1,
+      "createdAt": "2025-03-31T10:12:37.062305",
+      "updatedAt": "2025-03-31T10:12:37.062305"
+    },
+    {
+      "id": "65217bb4-4fea-465a-9e47-e5f5ae16edbd",
+      "ownerId": "d5542e17-d6d8-4b19-ac4c-69494a413208",
+      "photoCardId": "764c1050-1f7b-4045-b4f9-9a58bf06dbff",
+      "quantity": 2,
+      "createdAt": "2025-03-31T10:12:37.062305",
+      "updatedAt": "2025-03-31T10:12:37.062305"
+    }
+  ],
+  "saleCards": [
+    {
+      "id": "6d89823f-de4c-422b-8b25-be1d2e171eb7",
+      "sellerId": "1f4061dc-23fd-4bb2-9384-bd4a3dd8fe62",
+      "photoCardId": "8a446450-92a3-4a06-b3e7-a18175d307c8",
+      "quantity": 1,
+      "price": 1200,
+      "status": "ONSALE",
+      "createdAt": "2025-03-31T10:12:37.062305",
+      "updatedAt": "2025-03-31T10:12:37.062305"
+    },
+    {
+      "id": "10ffa82f-ae1f-4e70-a826-eabf8f4b0faf",
+      "sellerId": "2e2c8b6b-85e7-439a-a939-3143c4d202ca",
+      "photoCardId": "98b1c15d-39aa-4c85-8322-e537dce8dd70",
+      "quantity": 1,
+      "price": 800,
+      "status": "ONSALE",
+      "createdAt": "2025-03-31T10:12:37.062305",
+      "updatedAt": "2025-03-31T10:12:37.062305"
+    },
+    {
+      "id": "02bf14ef-4f00-4b88-8aa0-7a9a5a4a38db",
+      "sellerId": "41ddaf11-cb4b-46ed-ac82-67929b0cc43a",
+      "photoCardId": "2085d0fe-c6db-4227-beb0-8c51e8b87121",
+      "quantity": 1,
+      "price": 2000,
+      "status": "ONSALE",
+      "createdAt": "2025-03-31T10:12:37.062305",
+      "updatedAt": "2025-03-31T10:12:37.062305"
+    },
+    {
+      "id": "1e8c96d6-d206-48c7-82ab-d566df29c276",
+      "sellerId": "572a1025-33ad-47d9-b2fe-bad4b95423fd",
+      "photoCardId": "ac821788-8a66-4532-86a4-4d0d70e913e6",
+      "quantity": 1,
+      "price": 1500,
+      "status": "ONSALE",
+      "createdAt": "2025-03-31T10:12:37.062305",
+      "updatedAt": "2025-03-31T10:12:37.062305"
+    },
+    {
+      "id": "c618f3e0-69c9-4bd4-a425-b3dc80a87a30",
+      "sellerId": "82a0e33e-fb26-4b84-8f9b-2b3502c41333",
+      "photoCardId": "d65c980c-89d0-4024-92d8-016a22570d73",
+      "quantity": 1,
+      "price": 600,
+      "status": "ONSALE",
+      "createdAt": "2025-03-31T10:12:37.062305",
+      "updatedAt": "2025-03-31T10:12:37.062305"
+    },
+    {
+      "id": "af96bcb7-3776-4ce5-a8c3-3201deb217bd",
+      "sellerId": "d5542e17-d6d8-4b19-ac4c-69494a413208",
+      "photoCardId": "7c18083f-e37a-467e-867d-813e6b0abad9",
+      "quantity": 1,
+      "price": 2500,
+      "status": "ONSALE",
+      "createdAt": "2025-03-31T10:12:37.062305",
+      "updatedAt": "2025-03-31T10:12:37.062305"
+    }
+  ],
+  "randomBoxDraws": [
+    {
+      "id": "e3b3e430-abc9-4b6a-9bc5-b2b834b60dcc",
+      "userId": "1f4061dc-23fd-4bb2-9384-bd4a3dd8fe62",
+      "earnedPoints": 140,
+      "createdAt": "2025-03-20T10:12:37.062305"
+    },
+    {
+      "id": "1b170eeb-e106-4cf2-8708-423e61762e9d",
+      "userId": "2e2c8b6b-85e7-439a-a939-3143c4d202ca",
+      "earnedPoints": 419,
+      "createdAt": "2025-03-12T10:12:37.062305"
+    },
+    {
+      "id": "807acb0d-dcb2-435e-acf6-c6f6ffcfa7a4",
+      "userId": "41ddaf11-cb4b-46ed-ac82-67929b0cc43a",
+      "earnedPoints": 272,
+      "createdAt": "2025-03-10T10:12:37.062305"
+    },
+    {
+      "id": "02a4b85d-ac0c-43e4-8a08-f4d79eda2507",
+      "userId": "572a1025-33ad-47d9-b2fe-bad4b95423fd",
+      "earnedPoints": 828,
+      "createdAt": "2025-03-07T10:12:37.062305"
+    },
+    {
+      "id": "58c3f1a3-990c-4d46-bca8-199d55230335",
+      "userId": "82a0e33e-fb26-4b84-8f9b-2b3502c41333",
+      "earnedPoints": 652,
+      "createdAt": "2025-03-17T10:12:37.062305"
+    },
+    {
+      "id": "ed6b030b-db12-4580-bd70-ec5dc100b91c",
+      "userId": "d5542e17-d6d8-4b19-ac4c-69494a413208",
+      "earnedPoints": 186,
+      "createdAt": "2025-03-19T10:12:37.062305"
+    }
+  ],
+  "notifications": [
+    {
+      "id": "a58c4114-b4b5-4910-bacc-5b36423dc628",
+      "userId": "1f4061dc-23fd-4bb2-9384-bd4a3dd8fe62",
+      "type": "INFO",
+      "message": "새로운 포토카드가 도착했어요!",
+      "createdAt": "2025-03-31T10:12:37.062305",
+      "readAt": null
+    },
+    {
+      "id": "606bbbab-1283-4c7f-bdb6-6841176522fb",
+      "userId": "2e2c8b6b-85e7-439a-a939-3143c4d202ca",
+      "type": "INFO",
+      "message": "새로운 포토카드가 도착했어요!",
+      "createdAt": "2025-03-31T10:12:37.062305",
+      "readAt": null
+    },
+    {
+      "id": "1d295145-c947-4af7-bc6f-fa8900516952",
+      "userId": "41ddaf11-cb4b-46ed-ac82-67929b0cc43a",
+      "type": "INFO",
+      "message": "새로운 포토카드가 도착했어요!",
+      "createdAt": "2025-03-31T10:12:37.062305",
+      "readAt": null
+    },
+    {
+      "id": "931ab8aa-6584-498c-b684-2c7311d202fc",
+      "userId": "572a1025-33ad-47d9-b2fe-bad4b95423fd",
+      "type": "INFO",
+      "message": "새로운 포토카드가 도착했어요!",
+      "createdAt": "2025-03-31T10:12:37.062305",
+      "readAt": null
+    },
+    {
+      "id": "898d58a8-31b8-4359-9d14-0bad9790f35b",
+      "userId": "82a0e33e-fb26-4b84-8f9b-2b3502c41333",
+      "type": "INFO",
+      "message": "새로운 포토카드가 도착했어요!",
+      "createdAt": "2025-03-31T10:12:37.062305",
+      "readAt": null
+    },
+    {
+      "id": "22592360-e7fd-4aff-8aba-33d548e9d928",
+      "userId": "d5542e17-d6d8-4b19-ac4c-69494a413208",
+      "type": "INFO",
+      "message": "새로운 포토카드가 도착했어요!",
+      "createdAt": "2025-03-31T10:12:37.062305",
+      "readAt": null
+    }
+  ]
+}
