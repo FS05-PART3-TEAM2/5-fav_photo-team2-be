@@ -15,8 +15,6 @@ export const signup = async (req: Request, res: Response): Promise<void> => {
   }
   const result = await signupService(parsed.data);
   res.status(result.status).json(result.body);
-
-  throw new CustomError("서버 오류 발생", 500);
 };
 
 export const login = async (req: Request, res: Response): Promise<void> => {
@@ -29,8 +27,6 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     res.cookie("token", result.cookie.token, result.cookie.options);
   }
   res.status(result.status).json(result.body);
-
-  throw new CustomError("서버 오류 발생", 500);
 };
 
 export const logout = (req: Request, res: Response) => {
@@ -40,6 +36,4 @@ export const logout = (req: Request, res: Response) => {
 
 export const refreshAccessToken = async (req: Request, res: Response) => {
   await refreshTokenService(req, res);
-
-  throw new CustomError("서버 오류 발생", 500);
 };
