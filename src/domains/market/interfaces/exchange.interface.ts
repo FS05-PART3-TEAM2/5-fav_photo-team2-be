@@ -1,4 +1,4 @@
-export interface IExchangeOffer {
+export interface ExchangeOffer {
   id: string;
   saleCardId: string;
   offererId: string;
