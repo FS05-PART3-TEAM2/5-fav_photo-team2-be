@@ -9,6 +9,7 @@ export interface AuthResponse {
   body: any;
   cookie?: {
     token: string;
+    refreshToken?: string;
     options: any;
     refresh?: {
       token: string;

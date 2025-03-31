@@ -12,6 +12,7 @@ const JWT_EXPIRES_IN = "1h";
 const ACCESS_EXPIRES_IN = "1h";
 const isProd = process.env.NODE_ENV === "production";
 
+// 회원가입 서비스
 export const signupService = async (
   data: SignupInput
 ): Promise<AuthResponse> => {
@@ -33,6 +34,7 @@ export const signupService = async (
   };
 };
 
+/// 로그인 서비스
 export const loginService = async (data: LoginInput): Promise<AuthResponse> => {
   const { email, password } = data;
   const user = await prisma.user.findUnique({ where: { email } });
@@ -44,17 +46,35 @@ export const loginService = async (data: LoginInput): Promise<AuthResponse> => {
     };
   }
 
+  // accessToken 생성
   const accessToken = jwt.sign(
     { userId: user.id, role: user.role },
     JWT_SECRET,
     { expiresIn: JWT_EXPIRES_IN }
   );
+  // refreshToken 생성
+  const refreshToken = jwt.sign(
+    { userId: user.id, role: user.role },
+    JWT_SECRET,
+    { expiresIn: "7d" }
+  );
+  const refreshExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  // refreshToken DB에 저장
+  await prisma.auth.upsert({
+    where: { userId: user.id },
+    update: { refreshToken, expiresAt: refreshExpiresAt },
+    create: {
+      userId: user.id,
+      refreshToken,
+      expiresAt: refreshExpiresAt,
+    },
+  });
 
   return {
     status: 200,
     body: {
       message: "로그인 성공",
-      token: accessToken,
+      accessToken: accessToken,
       user: {
         id: user.id,
         email: user.email,
@@ -63,6 +83,7 @@ export const loginService = async (data: LoginInput): Promise<AuthResponse> => {
     },
     cookie: {
       token: accessToken,
+      refreshToken: refreshToken,
       options: {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
@@ -73,11 +94,13 @@ export const loginService = async (data: LoginInput): Promise<AuthResponse> => {
   };
 };
 
+/// 로그아웃 서비스
 export const logoutService = (res: Response): void => {
   res.clearCookie("token");
   res.status(200).json({ message: "로그아웃 성공" });
 };
 
+/// 리프레시 토큰 서비스
 export const refreshTokenService = async (
   req: Request,
   res: Response

@@ -4,7 +4,6 @@ import routes from "./domains/routes";
 import { swaggerUi, swaggerSpec } from "./utils/swagger/swagger";
 import cookieParser from "cookie-parser";
 import { errorHandler } from "./middlewares/error.middleware";
-
 dotenv.config();
 const app = express();
 app.use(cookieParser());
