@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 import { SignupDTO, LoginDTO } from "../dtos/auth.dto";
 import { AuthResponse } from "../interfaces/auth.interface";
 import { Request, Response } from "express";
+import { SignupInput, LoginInput } from "../../../zod/auth.schema";
 
 const prisma = new PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET || "secret-key";
@@ -11,7 +12,9 @@ const JWT_EXPIRES_IN = "1h";
 const ACCESS_EXPIRES_IN = "1h";
 const isProd = process.env.NODE_ENV === "production";
 
-export const signupService = async (data: SignupDTO): Promise<AuthResponse> => {
+export const signupService = async (
+  data: SignupInput
+): Promise<AuthResponse> => {
   const { email, password, nickname } = data;
   const existUser = await prisma.user.findUnique({ where: { email } });
 
@@ -30,7 +33,7 @@ export const signupService = async (data: SignupDTO): Promise<AuthResponse> => {
   };
 };
 
-export const loginService = async (data: LoginDTO): Promise<AuthResponse> => {
+export const loginService = async (data: LoginInput): Promise<AuthResponse> => {
   const { email, password } = data;
   const user = await prisma.user.findUnique({ where: { email } });
 
