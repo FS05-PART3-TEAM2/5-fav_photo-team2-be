@@ -1,7 +1,3 @@
-/**
- * 마켓 아이템 상세 응답 인터페이스
- */
-
 // 교환 제안 정보 인터페이스
 export interface MarketItemOffer {
   id: string;

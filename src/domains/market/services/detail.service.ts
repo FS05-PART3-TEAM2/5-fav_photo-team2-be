@@ -2,7 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import {
   MarketDetailResponse,
   MarketItemOffer,
-} from "../interfaces/marketDetail.interfaces";
+} from "../interfaces/detail.interfaces";
 
 export class MarketDetailService {
   private prisma: PrismaClient;
@@ -29,6 +29,18 @@ export class MarketDetailService {
 
     if (!photoCard) {
       throw new Error(`ID가 ${id}인 마켓 아이템을 찾을 수 없습니다.`);
+    }
+
+    // 판매 정보 조회
+    const saleCard = await this.prisma.saleCard.findFirst({
+      where: {
+        photoCardId: id,
+        status: "ON_SALE",
+      },
+    });
+
+    if (!saleCard) {
+      throw new Error(`ID가 ${id}인 판매 중인 카드를 찾을 수 없습니다.`);
     }
 
     // 마켓 아이템 등록자 정보 조회
@@ -64,10 +76,9 @@ export class MarketDetailService {
       totalAmount: userPhotoCard?.quantity || 0,
       createdAt: photoCard.createdAt.toISOString(),
       exchangeDetail: {
-        grade: "RARE",
-        genre: "인물",
-        description:
-          "푸릇푸릇한 여름 풍경, 눈 많이 내린 겨울 풍경 사진에 관심이 많습니다.",
+        grade: saleCard.exchangeGrade,
+        genre: saleCard.exchangeGenre,
+        description: saleCard.exchangeDescription,
       },
       isMine,
       receivedOffers: null,
@@ -94,6 +105,12 @@ export class MarketDetailService {
             const offerer = await this.prisma.user.findUnique({
               where: { id: offer.offererId },
             });
+
+            if (!offeredCard || !offerer) {
+              throw new Error(
+                `교환 제안 정보를 찾을 수 없습니다. ID: ${offer.id}`
+              );
+            }
 
             return {
               id: offer.id,
@@ -132,6 +149,12 @@ export class MarketDetailService {
             const offerer = await this.prisma.user.findUnique({
               where: { id: userId },
             });
+
+            if (!offeredCard || !offerer) {
+              throw new Error(
+                `내 교환 제안 정보를 찾을 수 없습니다. ID: ${offer.id}`
+              );
+            }
 
             return {
               id: offer.id,

@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
-import { MarketDetailService } from "../services/marketDetail.service";
-import { MarketDetailResponse } from "../interfaces/marketDetail.interfaces";
+import { MarketDetailService } from "../services/detail.service";
+import { MarketDetailResponse } from "../interfaces/detail.interfaces";
 
 class MarketDetailController {
   private marketDetailService: MarketDetailService;

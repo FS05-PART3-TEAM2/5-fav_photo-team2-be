@@ -1,9 +1,9 @@
 import { Router } from "express";
 import authRoutes from "./auth/auth.routes";
-import marketDetailRoutes from "./market/marketDetail/marketDetail.routes";
+import marketRoutes from "./market/market.routes";
 
 const router = Router();
 router.use("/auth", authRoutes);
-router.use("/market", marketDetailRoutes);
+router.use("/market", marketRoutes);
 
 export default router;
