@@ -7,7 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
@@ -17,9 +16,7 @@ model User {
   points    Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
 }
-
 
 model Auth {
   id           String   @id @default(uuid())
@@ -27,9 +24,7 @@ model Auth {
   refreshToken String?
   expiresAt    DateTime
   createdAt    DateTime @default(now())
-
 }
-
 
 model PhotoCard {
   id          String   @id @default(uuid())
@@ -42,20 +37,16 @@ model PhotoCard {
   imageUrl    String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-
 }
-
 
 model UserPhotoCard {
-  id           String   @id @default(uuid())
-  ownerId      String
-  photoCardId  String
-  quantity     Int
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
+  id          String   @id @default(uuid())
+  ownerId     String
+  photoCardId String
+  quantity    Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
-
 
 model SaleCard {
   id          String   @id @default(uuid())
@@ -66,57 +57,51 @@ model SaleCard {
   status      String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-
 }
 
 model TransactionLog {
-  id               String   @id @default(uuid())
-  transactionType  String
-  transactionId    String
-  newOwnerId       String
-  oldOwnerId       String
-  quantity         Int
-  totalPrice       Int
-  createdAt        DateTime @default(now())
-
+  id              String   @id @default(uuid())
+  transactionType String
+  transactionId   String
+  newOwnerId      String
+  oldOwnerId      String
+  quantity        Int
+  totalPrice      Int
+  createdAt       DateTime @default(now())
 }
 
 model ExchangeOffer {
-  id             String   @id @default(uuid())
-  saleCardId     String
-  offererId      String
-  offeredCardId  String
-  quantity       Int
-  status         String
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-
+  id            String   @id @default(uuid())
+  saleCardId    String
+  offererId     String
+  offeredCardId String
+  quantity      Int
+  status        String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
-
 model Notification {
-  id        String   @id @default(uuid())
+  id        String    @id @default(uuid())
   type      String
   userId    String
   message   String
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
   readAt    DateTime?
-
 }
 
 model PointHistory {
   id           String   @id @default(uuid())
-  userId      String
+  userId       String
   amount       Int
   resourceType String
   resourceId   String
   createdAt    DateTime @default(now())
-
 }
+
 model RandomBoxDraw {
   id           String   @id @default(uuid())
   userId       String
   earnedPoints Int
   createdAt    DateTime @default(now())
-
 }
