@@ -11,10 +11,7 @@ import { signupSchema, loginSchema } from "../../../zod/auth.schema";
 export const signup = async (req: Request, res: Response): Promise<void> => {
   const parsed = signupSchema.safeParse(req.body); //바디 데이터 검증
   if (!parsed.success) {
-    res
-      .status(400)
-      .json({ message: "유효하지 않은 요청", error: parsed.error.errors });
-    return;
+    throw new CustomError("유효하지 않은 요청", 400);
   }
   const result = await signupService(parsed.data);
   res.status(result.status).json(result.body);
@@ -25,10 +22,7 @@ export const signup = async (req: Request, res: Response): Promise<void> => {
 export const login = async (req: Request, res: Response): Promise<void> => {
   const parsed = loginSchema.safeParse(req.body); //바디 데이터 검증
   if (!parsed.success) {
-    res
-      .status(400)
-      .json({ message: "유효하지 않은 요청", error: parsed.error.errors });
-    return;
+    throw new CustomError("유효하지 않은 요청", 400);
   }
   const result = await loginService(parsed.data);
   if (result.cookie) {
