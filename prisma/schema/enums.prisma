@@ -1,0 +1,17 @@
+enum SaleCardStatus {
+  ON_SALE
+  SOLD_OUT
+  CANCELLED
+}
+
+enum ExchangeOfferStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  CANCELLED
+}
+
+enum MarketOfferType {
+  SALE
+  EXCHANGE
+}
