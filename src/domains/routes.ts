@@ -1,6 +1,6 @@
 import { Router } from "express";
 import authRoutes from "./auth/auth.routes";
-import photocardRoutes from "./photocard/photocard.routes";
+import photocardRoutes from "./market/photocard.routes";
 
 const router = Router();
 router.use("/auth", authRoutes);
