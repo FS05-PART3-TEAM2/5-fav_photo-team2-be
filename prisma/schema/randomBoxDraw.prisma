@@ -1,0 +1,6 @@
+model RandomBoxDraw {
+  id           String   @id @default(uuid())
+  userId       String
+  earnedPoints Int
+  createdAt    DateTime @default(now())
+}

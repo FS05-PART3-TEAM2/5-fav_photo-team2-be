@@ -1,0 +1,8 @@
+model PointHistory {
+  id           String   @id @default(uuid())
+  userId       String
+  amount       Int
+  resourceType String
+  resourceId   String
+  createdAt    DateTime @default(now())
+}
