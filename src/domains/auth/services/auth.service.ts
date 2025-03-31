@@ -5,6 +5,7 @@ import { SignupDTO, LoginDTO } from "../dtos/auth.dto";
 import { AuthResponse } from "../interfaces/auth.interface";
 import { Request, Response } from "express";
 import { SignupInput, LoginInput } from "../../../zod/auth.schema";
+import { CustomError } from "../../../utils/errorHandler";
 
 const prisma = new PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET || "secret-key";
@@ -20,7 +21,7 @@ export const signupService = async (
   const existUser = await prisma.user.findUnique({ where: { email } });
 
   if (existUser) {
-    return { status: 409, body: { message: "존재하는 이메일입니다." } };
+    throw new CustomError("이미 존재하는 이메일입니다.", 409);
   }
 
   const hashedPassword = await bcrypt.hash(password, 10);
@@ -40,10 +41,7 @@ export const loginService = async (data: LoginInput): Promise<AuthResponse> => {
   const user = await prisma.user.findUnique({ where: { email } });
 
   if (!user || !(await bcrypt.compare(password, user.password))) {
-    return {
-      status: 401,
-      body: { message: "이메일 또는 비밀번호가 잘못되었습니다." },
-    };
+    throw new CustomError("이메일 또는 비밀번호가 잘못되었습니다.", 401);
   }
 
   // accessToken 생성
@@ -107,34 +105,29 @@ export const refreshTokenService = async (
 ): Promise<void> => {
   const refreshToken = req.cookies.refreshToken;
   if (!refreshToken) {
-    res.status(401).json({ message: "refreshToken 없음" });
-    return;
+    throw new CustomError("refreshToken 없음", 401);
   }
-  try {
-    const decoded = jwt.verify(refreshToken, JWT_SECRET) as {
-      userId: string;
-      role: string;
-    };
-    const authRecord = await prisma.auth.findUnique({
-      where: { userId: decoded.userId },
-    });
-    if (!authRecord || authRecord.refreshToken !== refreshToken) {
-      res.status(403).json({ message: "유효하지 않은 refreshToken" });
-      return;
-    }
-    const newAccessToken = jwt.sign(
-      { userId: decoded.userId, role: decoded.role },
-      JWT_SECRET,
-      { expiresIn: ACCESS_EXPIRES_IN }
-    );
-    res.cookie("token", newAccessToken, {
-      httpOnly: true,
-      secure: isProd,
-      sameSite: "lax",
-      maxAge: 60 * 60 * 1000,
-    });
-    res.status(200).json({ message: "accessToken 재발급 완료" });
-  } catch {
-    res.status(403).json({ message: "refreshToken 검증 실패" });
+
+  const decoded = jwt.verify(refreshToken, JWT_SECRET) as {
+    userId: string;
+    role: string;
+  };
+  const authRecord = await prisma.auth.findUnique({
+    where: { userId: decoded.userId },
+  });
+  if (!authRecord || authRecord.refreshToken !== refreshToken) {
+    throw new CustomError("유효하지 않은 refreshToken", 403);
   }
+  const newAccessToken = jwt.sign(
+    { userId: decoded.userId, role: decoded.role },
+    JWT_SECRET,
+    { expiresIn: ACCESS_EXPIRES_IN }
+  );
+  res.cookie("token", newAccessToken, {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: "lax",
+    maxAge: 60 * 60 * 1000,
+  });
+  res.status(200).json({ message: "accessToken 재발급 완료" });
 };
