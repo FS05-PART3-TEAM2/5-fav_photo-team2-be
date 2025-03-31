@@ -1,5 +1,5 @@
 {
-  "users": [
+  "User": [
     {
       "id": "1f4061dc-23fd-4bb2-9384-bd4a3dd8fe62",
       "email": "syga@test.com",
@@ -61,7 +61,7 @@
       "updatedAt": "2025-03-31T09:26:05.079Z"
     }
   ],
-  "photoCards": [
+  "PhotoCards": [
     {
       "id": "8a446450-92a3-4a06-b3e7-a18175d307c8",
       "creatorId": "1f4061dc-23fd-4bb2-9384-bd4a3dd8fe62",
@@ -207,7 +207,7 @@
       "updatedAt": "2025-03-31T10:12:37.062305"
     }
   ],
-  "userPhotoCards": [
+  "UserPhotoCards": [
     {
       "id": "ba939c25-4a5a-42b6-a2ab-243f2e7b63c2",
       "ownerId": "1f4061dc-23fd-4bb2-9384-bd4a3dd8fe62",
@@ -305,7 +305,7 @@
       "updatedAt": "2025-03-31T10:12:37.062305"
     }
   ],
-  "saleCards": [
+  "SaleCards": [
     {
       "id": "6d89823f-de4c-422b-8b25-be1d2e171eb7",
       "sellerId": "1f4061dc-23fd-4bb2-9384-bd4a3dd8fe62",
@@ -367,7 +367,7 @@
       "updatedAt": "2025-03-31T10:12:37.062305"
     }
   ],
-  "randomBoxDraws": [
+  "RandomBoxDraws": [
     {
       "id": "e3b3e430-abc9-4b6a-9bc5-b2b834b60dcc",
       "userId": "1f4061dc-23fd-4bb2-9384-bd4a3dd8fe62",
@@ -405,7 +405,7 @@
       "createdAt": "2025-03-19T10:12:37.062305"
     }
   ],
-  "notifications": [
+  "Notifications": [
     {
       "id": "a58c4114-b4b5-4910-bacc-5b36423dc628",
       "userId": "1f4061dc-23fd-4bb2-9384-bd4a3dd8fe62",
