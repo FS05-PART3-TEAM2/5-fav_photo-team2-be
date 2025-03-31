@@ -3,7 +3,6 @@ model ExchangeOffer {
   saleCardId    String
   offererId     String
   offeredCardId String
-  quantity      Int
   status        String
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
