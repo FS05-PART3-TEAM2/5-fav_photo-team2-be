@@ -4,11 +4,11 @@ import {
   refreshAccessToken,
   signup,
 } from "./controllers/auth.controller";
-
+import { requestHandler } from "../../utils/requestHandler";
 const router = Router();
 
-router.post("/signup", signup);
-router.post("/login", login);
-router.post("/refresh", refreshAccessToken);
+router.post("/signup", requestHandler(signup));
+router.post("/login", requestHandler(login));
+router.post("/refresh", requestHandler(refreshAccessToken));
 
 export default router;
