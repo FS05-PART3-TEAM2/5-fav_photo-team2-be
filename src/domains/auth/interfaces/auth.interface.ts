@@ -10,5 +10,9 @@ export interface AuthResponse {
   cookie?: {
     token: string;
     options: any;
+    refresh?: {
+      token: string;
+      options: any;
+    };
   };
 }

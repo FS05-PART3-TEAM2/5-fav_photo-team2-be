@@ -3,6 +3,7 @@ import {
   loginService,
   signupService,
   logoutService,
+  refreshTokenService,
 } from "../services/auth.service";
 import { CustomError } from "../../../utils/errorHandler";
 
@@ -30,4 +31,8 @@ export const login = async (req: Request, res: Response) => {
 export const logout = (req: Request, res: Response) => {
   logoutService(res);
   res.status(200).json({ message: "로그아웃 성공" });
+};
+
+export const refreshAccessToken = async (req: Request, res: Response) => {
+  await refreshTokenService(req, res);
 };
