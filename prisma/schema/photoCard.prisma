@@ -1,0 +1,12 @@
+model PhotoCard {
+  id          String   @id @default(uuid())
+  creatorId   String
+  name        String
+  genre       String
+  grade       String
+  price       Int
+  description String
+  imageUrl    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
