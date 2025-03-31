@@ -1,39 +1,43 @@
-import { PrismaService } from "../../../prisma/prisma.service";
+import { PrismaClient } from "@prisma/client";
 import {
-  PhotoCardDetailResponse,
-  ExchangeOffer,
-} from "../interfaces/photocard.interfaces";
+  MarketDetailResponse,
+  MarketItemOffer,
+} from "../interfaces/marketDetail.interfaces";
 
-export class PhotoCardService {
-  constructor(private prisma: PrismaService) {}
+export class MarketDetailService {
+  private prisma: PrismaClient;
+
+  constructor() {
+    this.prisma = new PrismaClient();
+  }
 
   /**
-   * 포토카드 상세 정보 조회
+   * 마켓 아이템 상세 정보 조회
    *
-   * @param id 포토카드 ID
+   * @param id 마켓 아이템 ID
    * @param userId 현재 로그인한 사용자 ID
-   * @returns 포토카드 상세 정보 및 소유 정보
+   * @returns 마켓 아이템 상세 정보 및 소유 정보
    */
-  async getPhotoCardDetail(
+  async getMarketItemDetail(
     id: string,
     userId: string
-  ): Promise<PhotoCardDetailResponse> {
-    // 포토카드 기본 정보 조회
+  ): Promise<MarketDetailResponse> {
+    // 마켓 아이템 기본 정보 조회
     const photoCard = await this.prisma.photoCard.findUnique({
       where: { id },
     });
 
     if (!photoCard) {
-      throw new Error(`ID가 ${id}인 포토카드를 찾을 수 없습니다.`);
+      throw new Error(`ID가 ${id}인 마켓 아이템을 찾을 수 없습니다.`);
     }
 
-    // 포토카드 생성자/소유자 정보 조회
+    // 마켓 아이템 등록자 정보 조회
     const creator = await this.prisma.user.findUnique({
       where: { id: photoCard.creatorId },
     });
 
     if (!creator) {
-      throw new Error("포토카드 생성자 정보를 찾을 수 없습니다.");
+      throw new Error("마켓 아이템 등록자 정보를 찾을 수 없습니다.");
     }
 
     // 사용자 소유 여부 확인
@@ -47,7 +51,7 @@ export class PhotoCardService {
     const isMine = !!userPhotoCard;
 
     // 기본 응답 구성
-    const response: PhotoCardDetailResponse = {
+    const response: MarketDetailResponse = {
       id: photoCard.id,
       userNickname: creator.nickname,
       imageUrl: photoCard.imageUrl,
@@ -57,10 +61,10 @@ export class PhotoCardService {
       description: photoCard.description,
       price: photoCard.price,
       availableAmount: userPhotoCard?.quantity || 0,
-      totalAmount: userPhotoCard?.quantity || 0, // 실제로는 총량 계산 필요
+      totalAmount: userPhotoCard?.quantity || 0,
       createdAt: photoCard.createdAt.toISOString(),
       exchangeDetail: {
-        grade: "RARE", // 교환 희망 정보는 별도 저장 필요
+        grade: "RARE",
         genre: "인물",
         description:
           "푸릇푸릇한 여름 풍경, 눈 많이 내린 겨울 풍경 사진에 관심이 많습니다.",
@@ -81,8 +85,8 @@ export class PhotoCardService {
 
       // 교환 제안 상세 정보 조회
       if (exchangeOffers.length > 0) {
-        const offersWithDetails: ExchangeOffer[] = await Promise.all(
-          exchangeOffers.map(async (offer) => {
+        const offersWithDetails: MarketItemOffer[] = await Promise.all(
+          exchangeOffers.map(async (offer: any) => {
             const offeredCard = await this.prisma.photoCard.findUnique({
               where: { id: offer.offeredCardId },
             });
@@ -118,8 +122,8 @@ export class PhotoCardService {
       });
 
       if (myOffers.length > 0) {
-        const myOffersWithDetails: ExchangeOffer[] = await Promise.all(
-          myOffers.map(async (offer) => {
+        const myOffersWithDetails: MarketItemOffer[] = await Promise.all(
+          myOffers.map(async (offer: any) => {
             const offeredCard = await this.prisma.photoCard.findUnique({
               where: { id: offer.offeredCardId },
             });
