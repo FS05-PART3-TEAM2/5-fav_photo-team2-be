@@ -96,7 +96,7 @@ export const loginService = async (data: LoginInput): Promise<AuthResponse> => {
 
 /// 로그아웃 서비스
 export const logoutService = (res: Response): void => {
-  res.clearCookie("token");
+  res.clearCookie("token, refreshToken");
   res.status(200).json({ message: "로그아웃 성공" });
 };
 
