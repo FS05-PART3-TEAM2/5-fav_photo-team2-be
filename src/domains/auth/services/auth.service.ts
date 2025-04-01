@@ -1,13 +1,11 @@
-import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { SignupDTO, LoginDTO } from "../dtos/auth.dto";
 import { AuthResponse } from "../interfaces/auth.interface";
 import { Request, Response } from "express";
 import { SignupInput, LoginInput } from "../../../zod/auth.schema";
-import { CustomError } from "../../../utils/errorHandler";
+import { CustomError } from "../../../utils/errors";
+import prisma from "../../../utils/prismaClient";
 
-const prisma = new PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET || "secret-key";
 const JWT_EXPIRES_IN = "1h";
 const ACCESS_EXPIRES_IN = "1h";
