@@ -1,11 +1,14 @@
 import { PrismaClient } from "@prisma/client";
+import { CreateNotificationInput } from "../interfaces/requestWithUser";
 
 const prisma = new PrismaClient();
 
 // 알림 조회 로직
 export const getUserNotifications = async (userId: string) => {
+  console.log("userId", userId);
   return await prisma.notification.findMany({
     where: { userId },
+
     orderBy: { createdAt: "desc" }, // 최신순 정렬
   });
 };
@@ -16,7 +19,7 @@ export const markNotificationAsRead = async (
   notificationId: string
 ) => {
   const notification = await prisma.notification.findUnique({
-    where: { id: notificationId },
+    where: { id: notificationId, userId },
   });
 
   if (!notification || notification.userId !== userId) {
@@ -26,5 +29,17 @@ export const markNotificationAsRead = async (
   return await prisma.notification.update({
     where: { id: notificationId },
     data: { readAt: new Date() },
+  });
+};
+
+// 알림 생성 로직
+export const createNotification = async (input: CreateNotificationInput) => {
+  const { userId, type, message } = input;
+  return await prisma.notification.create({
+    data: {
+      userId,
+      type,
+      message,
+    },
   });
 };
