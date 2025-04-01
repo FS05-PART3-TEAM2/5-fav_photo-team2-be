@@ -84,7 +84,7 @@ const getMarketList: GetMarketList = async (queries) => {
     toMarketResponse(card, Number(transactionMap.get(card.id) || 0))
   );
 
-  console.log(data);
+  // console.log(data);
 
   const hasMore = data.length === limit;
   const nextCursor = hasMore
