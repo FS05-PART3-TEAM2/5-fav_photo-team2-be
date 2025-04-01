@@ -23,6 +23,7 @@ export interface MarketDetailResponse {
   price: number;
   availableAmount: number;
   totalAmount: number;
+  totalOwnAmount: number;
   createdAt: string;
   isMine: boolean;
   exchangeDetail: {
