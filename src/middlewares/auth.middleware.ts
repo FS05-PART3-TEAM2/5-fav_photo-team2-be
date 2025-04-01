@@ -17,11 +17,15 @@ export const authenticate = (
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as {
-      id: string;
+      userId: string;
       role: string;
       email?: string;
     };
-    req.user = decoded;
+    req.user = {
+      id: decoded.userId,
+      role: decoded.role,
+    };
+    console.log("미들 웨어 검증 후 req.user 반환", req.user);
     next();
   } catch (err) {
     res.status(401).json({ message: "유효하지 않은 토큰입니다" });
