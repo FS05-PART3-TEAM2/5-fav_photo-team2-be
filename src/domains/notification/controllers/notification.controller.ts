@@ -26,7 +26,7 @@ export const readNotification = async (
   req: RequestWithUser,
   res: Response
 ): Promise<void> => {
-  const userId = req.user!.id;
+  const userId = req.user.id;
   const { notificationId } = req.params; // URL 파라미터에서 알림 ID 가져오기
 
   try {
@@ -46,14 +46,9 @@ export const createNotificationController = async (
   req: RequestWithUser,
   res: Response
 ): Promise<void> => {
-  const userId = req.user?.id;
+  const userId = req.user.id;
 
   const { type, message } = req.body; // 알림 타입과 메시지
-
-  if (!userId) {
-    res.status(401).json({ message: "로그인이 필요합니다." });
-    return;
-  }
 
   const result = await notificationService.createNotification({
     userId,
