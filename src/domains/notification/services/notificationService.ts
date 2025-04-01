@@ -34,11 +34,10 @@ export const markNotificationAsRead = async (
 
 // 알림 생성 로직
 export const createNotification = async (input: CreateNotificationInput) => {
-  const { userId, type, message } = input;
+  const { userId, message } = input;
   return await prisma.notification.create({
     data: {
       userId,
-      type,
       message,
     },
   });
