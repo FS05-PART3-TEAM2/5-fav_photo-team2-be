@@ -72,18 +72,25 @@ const getMarketList: GetMarketList = async (queries) => {
   });
 
   const transactionMap = new Map(
-    transactions.map((t) => [t.saleCardId, t._sum.quantity || 0])
+    transactions.map(
+      (t: { saleCardId: string; _sum: { quantity: number | null } }) => [
+        t.saleCardId,
+        t._sum.quantity || 0,
+      ]
+    )
   );
 
   const data = saleCards.map((card) =>
-    toMarketResponse(card, transactionMap.get(card.id) || 0)
+    toMarketResponse(card, Number(transactionMap.get(card.id) || 0))
   );
+
+  console.log(data);
 
   const hasMore = data.length === limit;
   const nextCursor = hasMore
     ? {
-        createdAt: data[data.length - 1].createdAt,
-        id: data[data.length - 1].saleCardId,
+        createdAt: saleCards[data.length - 1].createdAt.toISOString(),
+        id: saleCards[data.length - 1].id,
       }
     : null;
 
