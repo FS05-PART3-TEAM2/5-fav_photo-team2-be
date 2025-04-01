@@ -1,12 +1,13 @@
-import express from "express";
+import { Router } from "express";
 import marketController from "./controllers/market.controller";
+import marketDetailController from "./controllers/detail.controller";
 import { requestHandler } from "../../utils/requestHandler";
 import { validateAll } from "../../middlewares/validator.middleware";
 import { MarketListQuerySchema } from "./validators/market.validator";
 import { declineOfferController } from "./controllers/exchange.controller";
 import { authenticate } from "../../middlewares/auth.middleware";
 
-const router = express.Router();
+const router = Router();
 
 router.get(
   "/",
@@ -14,11 +15,9 @@ router.get(
   requestHandler(marketController.getMarketList)
 );
 
+router.get("/:id", authenticate, marketDetailController.getMarketItemDetail);
+
 // Exchange routes
-router.patch(
-  "/api/market/exchange/:id/decline",
-  authenticate,
-  declineOfferController
-);
+router.patch("/exchange/:id/decline", authenticate, declineOfferController);
 
 export default router;
