@@ -1,45 +1,83 @@
-import { GetMarketList } from "../types/market.type";
+import { toMarketResponse } from "../../../utils/mappers/market.mapper";
+import prisma from "../../../utils/prismaClient";
+import { GetMarketList, MarketCardDto } from "../types/market.type";
 
 const getMarketList: GetMarketList = async (queries) => {
-  const where: any = {};
+  const { keyword, genre, grade, cursor, limit } = queries;
 
-  if (queries.keyword) {
-    where.$or = [
-      { name: { $regex: queries.keyword, $options: "i" } },
-      { description: { $regex: queries.keyword, $options: "i" } },
-    ];
-  }
-  if (queries.grade && queries.grade !== "ALL") {
-    where.grade = queries.grade;
-  }
-  if (queries.genre && queries.genre !== "전체") {
-    where.genre = queries.genre;
-  }
-  if (queries.status && queries.status !== "ALL") {
-    where.status = queries.status;
-  }
-
-  const sort: Record<string, 1 | -1> = { createdAt: -1 };
-
-  if (queries.sort === "old") sort.createdAt = 1;
-  if (queries.sort === "cheap") sort.price = 1;
-  if (queries.sort === "expensive") sort.price = -1;
-
-  const limit = queries.limit || 20;
-  const cursor = queries.cursor;
-
-  if (cursor) {
-    where.$and = [
-      ...(where.$or ? [{ $or: where.$or }] : []),
-      {
-        $or: [
-          { createdAt: { $lt: cursor.createdAt } },
-          { createdAt: cursor.createdAt, _id: { $lt: cursor.id } },
-        ],
+  const saleCards: MarketCardDto[] = await prisma.saleCard.findMany({
+    where: {
+      AND: [
+        cursor
+          ? {
+              OR: [
+                { createdAt: { lt: new Date(cursor.createdAt) } },
+                {
+                  createdAt: { equals: new Date(cursor.createdAt) },
+                  id: { lt: cursor.id },
+                },
+              ],
+            }
+          : {},
+        {
+          photoCard: {
+            AND: [
+              keyword
+                ? {
+                    OR: [
+                      { name: { contains: keyword, mode: "insensitive" } },
+                      {
+                        description: { contains: keyword, mode: "insensitive" },
+                      },
+                    ],
+                  }
+                : {},
+              genre ? { genre } : {},
+              grade ? { grade } : {},
+            ],
+          },
+        },
+      ],
+    },
+    include: {
+      seller: { select: { id: true, nickname: true } },
+      userPhotoCard: { select: { quantity: true } },
+      photoCard: {
+        select: {
+          creator: { select: { id: true, nickname: true } },
+          name: true,
+          genre: true,
+          grade: true,
+          description: true,
+          imageUrl: true,
+        },
       },
-    ];
-    delete where.$or;
-  }
+    },
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    take: limit,
+  });
+
+  console.log(JSON.stringify(saleCards, null, 2));
+
+  const saleCardIds = saleCards.map((card) => card.id);
+
+  const transactions = await prisma.transactionLog.groupBy({
+    by: ["saleCardId"],
+    where: {
+      saleCardId: { in: saleCardIds },
+    },
+    _sum: {
+      quantity: true,
+    },
+  });
+
+  const transactionMap = new Map(
+    transactions.map((t) => [t.saleCardId, t._sum.quantity || 0])
+  );
+
+  const response = saleCards.map((card) => toMarketResponse());
+
+  return response;
 };
 
 const marketService = {
