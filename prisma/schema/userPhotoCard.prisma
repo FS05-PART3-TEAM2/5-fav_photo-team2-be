@@ -6,6 +6,7 @@ model UserPhotoCard {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  saleCard SaleCard[]
+
   @@index([ownerId])
-  @@index([ownerId, photoCardId])
 }
