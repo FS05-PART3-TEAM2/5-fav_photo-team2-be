@@ -57,7 +57,7 @@ const getMarketList: GetMarketList = async (queries) => {
     take: limit,
   });
 
-  console.log(JSON.stringify(saleCards, null, 2));
+  // console.log(JSON.stringify(saleCards, null, 2));
 
   const saleCardIds = saleCards.map((card) => card.id);
 
@@ -75,9 +75,23 @@ const getMarketList: GetMarketList = async (queries) => {
     transactions.map((t) => [t.saleCardId, t._sum.quantity || 0])
   );
 
-  const response = saleCards.map((card) => toMarketResponse());
+  const data = saleCards.map((card) =>
+    toMarketResponse(card, transactionMap.get(card.id) || 0)
+  );
 
-  return response;
+  const hasMore = data.length === limit;
+  const nextCursor = hasMore
+    ? {
+        createdAt: data[data.length - 1].createdAt,
+        id: data[data.length - 1].saleCardId,
+      }
+    : null;
+
+  return {
+    hasMore,
+    nextCursor,
+    list: data,
+  };
 };
 
 const marketService = {

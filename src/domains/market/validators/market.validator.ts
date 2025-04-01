@@ -8,6 +8,9 @@ export const MarketListQuerySchema = z.object({
   genre: z.enum(["전체", "여행", "풍경", "인물", "장소"]).optional(),
   status: z.enum(["ALL", "ON_SALE", "SOLD_OUT", "CANCELED"]).optional(),
   sort: z.enum(["recent", "old", "cheap", "expensive"]).optional(),
-  limit: z.number().optional(),
+  limit: z
+    .string()
+    .optional()
+    .transform((v) => (v ? parseInt(v, 10) : undefined)),
   cursor: z.object({ id: z.string(), createdAt: z.string() }).optional(),
 });

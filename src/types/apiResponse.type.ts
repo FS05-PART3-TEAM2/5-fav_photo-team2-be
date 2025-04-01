@@ -1,10 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 
-export interface RequestWithUser extends Request {
-  user?: {
-    userId: string;
-    role: string;
-  };
+interface RequestWithUser extends Request {
+  user?: { id: string; role: string; email?: string; nickname?: string };
 }
 
 export type ApiSignature = (

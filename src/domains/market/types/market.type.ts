@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { MarketListQuerySchema } from "../validators/market.validator";
+import { SaleCardStatus } from "@prisma/client";
 
 export type GetMarketList = (
   queries: MarketListQuery
@@ -11,7 +12,7 @@ export interface MarketListResponse {
   nextCursor: {
     id: string;
     createdAt: string;
-  };
+  } | null;
   list: MarketResponse[];
 }
 export interface MarketResponse {
@@ -24,11 +25,15 @@ export interface MarketResponse {
   price: number;
   image: string;
   remaining: number;
-  totoal: number;
+  total: number;
   exchangeDescription?: string;
   exchangeGrade?: string;
   exchangeGenre?: string;
-  owner: {
+  creator: {
+    id: string;
+    nickname: string;
+  };
+  seller: {
     id: string;
     nickname: string;
   };
@@ -40,12 +45,12 @@ export type MarketCardDto = {
   id: string;
   quantity: number;
   price: number;
-  status: "ON_SALE" | "SOLD_OUT" | "CANCELED";
+  status: string;
   exchangeDescription: string;
-  exchangeGrade: "COMMON" | "RARE" | "SUPER_RARE" | "LEGENDARY";
+  exchangeGrade: string;
   exchangeGenre: string;
-  createdAt: string; // ISO string이므로 Date로 쓸 수도 있음
-  updatedAt: string;
+  createdAt: Date; // ISO string이므로 Date로 쓸 수도 있음
+  updatedAt: Date;
   sellerId: string;
   photoCardId: string;
   userPhotoCardId: string;
@@ -63,7 +68,7 @@ export type MarketCardDto = {
     };
     name: string;
     genre: string;
-    grade: "COMMON" | "RARE" | "SUPER_RARE" | "LEGENDARY";
+    grade: string;
     description: string;
     imageUrl: string;
   };
