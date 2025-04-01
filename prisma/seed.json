@@ -312,7 +312,7 @@
       "photoCardId": "8a446450-92a3-4a06-b3e7-a18175d307c8",
       "quantity": 1,
       "price": 1200,
-      "status": "ONSALE",
+      "status": "ON_SALE",
       "createdAt": "2025-03-31T10:12:37.062305",
       "updatedAt": "2025-03-31T10:12:37.062305"
     },
@@ -322,7 +322,7 @@
       "photoCardId": "98b1c15d-39aa-4c85-8322-e537dce8dd70",
       "quantity": 1,
       "price": 800,
-      "status": "ONSALE",
+      "status": "ON_SALE",
       "createdAt": "2025-03-31T10:12:37.062305",
       "updatedAt": "2025-03-31T10:12:37.062305"
     },
@@ -332,7 +332,7 @@
       "photoCardId": "2085d0fe-c6db-4227-beb0-8c51e8b87121",
       "quantity": 1,
       "price": 2000,
-      "status": "ONSALE",
+      "status": "ON_SALE",
       "createdAt": "2025-03-31T10:12:37.062305",
       "updatedAt": "2025-03-31T10:12:37.062305"
     },
@@ -342,7 +342,7 @@
       "photoCardId": "ac821788-8a66-4532-86a4-4d0d70e913e6",
       "quantity": 1,
       "price": 1500,
-      "status": "ONSALE",
+      "status": "ON_SALE",
       "createdAt": "2025-03-31T10:12:37.062305",
       "updatedAt": "2025-03-31T10:12:37.062305"
     },
@@ -352,7 +352,7 @@
       "photoCardId": "d65c980c-89d0-4024-92d8-016a22570d73",
       "quantity": 1,
       "price": 600,
-      "status": "ONSALE",
+      "status": "ON_SALE",
       "createdAt": "2025-03-31T10:12:37.062305",
       "updatedAt": "2025-03-31T10:12:37.062305"
     },
@@ -362,7 +362,7 @@
       "photoCardId": "7c18083f-e37a-467e-867d-813e6b0abad9",
       "quantity": 1,
       "price": 2500,
-      "status": "ONSALE",
+      "status": "ON_SALE",
       "createdAt": "2025-03-31T10:12:37.062305",
       "updatedAt": "2025-03-31T10:12:37.062305"
     }
