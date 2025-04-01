@@ -1,10 +1,12 @@
 model TransactionLog {
   id              String   @id @default(uuid())
   transactionType String
-  transactionId   String
+  saleCardId      String
   newOwnerId      String
   oldOwnerId      String
   quantity        Int
   totalPrice      Int
   createdAt       DateTime @default(now())
+
+  @@index([saleCardId])
 }
