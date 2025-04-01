@@ -4,8 +4,9 @@ export interface ExchangeOffer {
   id: string;
   saleCardId: string;
   offererId: string;
-  offeredCardId: string;
-  status: ExchangeStatus;
+  userPhotoCardId: string;
+  status: string;
+  content: String;
   createdAt: Date;
   updatedAt: Date;
 }
