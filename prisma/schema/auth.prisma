@@ -1,0 +1,7 @@
+model Auth {
+  id           String   @id @default(uuid())
+  userId       String   @unique
+  refreshToken String?
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+}
