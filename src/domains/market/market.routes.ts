@@ -5,7 +5,7 @@ import { authenticate } from "../../middlewares/auth.middleware";
 
 const router = Router();
 // 마켓플레이스 상세 조회 라우트
-router.get("/:id", marketDetailController.getMarketItemDetail);
+router.get("/:id", authenticate, marketDetailController.getMarketItemDetail);
 
 // Exchange routes
 router.patch("/exchange/:id/decline", authenticate, declineOfferController);
