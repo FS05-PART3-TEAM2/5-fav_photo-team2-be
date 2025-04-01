@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 import dayjs from "dayjs";
 
 const COOLDOWN_HOURS = 1;
@@ -27,7 +27,7 @@ export const openRandomBox = async (userId: string) => {
 
   const earnedPoints = Math.floor(Math.random() * 101) + 50;
 
-  const box = await prisma.randomBox.create({
+  const box = await prisma.randomBoxDraw.create({
     data: {
       userId,
       earnedPoints,
