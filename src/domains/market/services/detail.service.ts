@@ -48,6 +48,17 @@ export const getMarketItemDetail = async (
     );
   }
 
+  // 원작자 정보 조회
+  const creator = await prisma.user.findUnique({
+    where: { id: photoCard.creatorId },
+  });
+
+  if (!creator) {
+    throw new Error(
+      `ID가 ${photoCard.creatorId}인 원작자 정보를 찾을 수 없습니다.`
+    );
+  }
+
   // 사용자가 판매자인지 여부 확인 (isMine)
   const isMine = saleCard.sellerId === userId;
 
@@ -78,7 +89,7 @@ export const getMarketItemDetail = async (
   // 기본 응답 구성
   const response: MarketDetailResponse = {
     id: saleCard.id,
-    userNickname: seller.nickname,
+    userNickname: creator.nickname,
     imageUrl: photoCard.imageUrl,
     name: photoCard.name,
     grade: photoCard.grade,
