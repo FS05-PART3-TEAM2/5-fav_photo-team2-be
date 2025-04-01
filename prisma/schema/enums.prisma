@@ -1,17 +1,24 @@
 enum SaleCardStatus {
   ON_SALE
   SOLD_OUT
-  CANCELLED
+  CANCELED
 }
 
 enum ExchangeOfferStatus {
   PENDING
   ACCEPTED
-  DECLINED
-  CANCELLED
+  // DECLINED
+  FAILED
 }
 
 enum MarketOfferType {
   SALE
   EXCHANGE
+}
+
+enum PhotoCardGrade {
+  COMMON
+  RARE
+  SUPER_RARE
+  LEGENDARY
 }
