@@ -5,8 +5,8 @@ import {
   logoutService,
   refreshTokenService,
 } from "../services/auth.service";
-import { CustomError } from "../../../utils/errorHandler";
 import { signupSchema, loginSchema } from "../../../zod/auth.schema";
+import { CustomError } from "../../../utils/errors";
 
 /// 회원가입
 export const signup = async (req: Request, res: Response): Promise<void> => {
