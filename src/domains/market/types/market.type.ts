@@ -3,7 +3,7 @@ import {
   MarketListQuerySchema,
   MarketMeQuerySchema,
 } from "../validators/market.validator";
-import { DecodedUser } from "../../auth/interfaces/auth.interface";
+import { ExchangeOffer, SaleCard } from "@prisma/client";
 
 export type GetMarketList = (
   queries: MarketListQuery
@@ -116,26 +116,12 @@ export type MarketCardDto = {
 };
 export type MarketMyCardDto = {
   id: string;
-  quantity: number;
-  price: number;
-  status: string;
-  exchangeDescription: string;
-  exchangeGrade: string;
-  exchangeGenre: string;
-  createdAt: Date; // ISO string이므로 Date로 쓸 수도 있음
+  type: string;
+  ownerId: string;
+  createdAt: Date;
   updatedAt: Date;
-  sellerId: string;
-  photoCardId: string;
-  userPhotoCardId: string;
-  photoCard: {
-    creator: {
-      id: string;
-      nickname: string;
-    };
-    name: string;
-    genre: string;
-    grade: string;
-    description: string;
-    imageUrl: string;
-  };
+  saleCardId: string | null;
+  exchangeOfferId: string | null;
+  saleCard: SaleCard | null;
+  exchangeOffer: ExchangeOffer | null;
 };
