@@ -8,16 +8,19 @@ import {
   GradeCounts,
 } from "../types/photocard.type";
 
-// Prisma 클라이언트 인스턴스 생성
+// Prisma 클라이언트 생성
 const prisma = new PrismaClient();
 
+/**
+ * 사용자의 포토카드 목록을 조회하는 함수
+ */
 const getMyPhotocards: GetMyPhotocards = async (
   userId: string,
   queries: MyPhotocardsQuery
 ): Promise<MyPhotocardsResponse> => {
   const { keyword, grade, genre, sortOption, limit, cursor } = queries;
 
-  // 현재 사용자 정보 조회
+  // 사용자 정보 조회
   const currentUser = await prisma.user.findUnique({
     where: { id: userId },
     select: { nickname: true },
@@ -27,14 +30,14 @@ const getMyPhotocards: GetMyPhotocards = async (
     throw new Error("사용자를 찾을 수 없습니다.");
   }
 
-  // 사용자의 등급별 카드 개수 조회
+  // 등급별 카드 개수 조회
   const gradeCounts = await getGradeCounts(userId);
 
-  // 1. 커서 기반 페이지네이션을 적용하여 사용자의 포토카드 조회
+  // 커서 기반 페이지네이션으로 포토카드 조회
   const userPhotoCards = await prisma.userPhotoCard.findMany({
     where: {
       ownerId: userId,
-      // 복합 커서 페이지네이션 적용
+      // 복합 커서 조건 적용
       ...(cursor
         ? {
             OR: [
@@ -54,10 +57,8 @@ const getMyPhotocards: GetMyPhotocards = async (
     take: limit,
   });
 
-  // 다음 페이지 존재 여부 확인
+  // 다음 페이지 커서 생성
   const hasMore = userPhotoCards.length === limit;
-
-  // 복합 커서 구성
   const nextCursor: CursorType | null = hasMore
     ? {
         id: userPhotoCards[userPhotoCards.length - 1].id,
@@ -66,9 +67,10 @@ const getMyPhotocards: GetMyPhotocards = async (
       }
     : null;
 
-  // 사용자가 소유한 포토카드 ID 목록
+  // 포토카드 ID 목록
   const photoCardIds = userPhotoCards.map((card) => card.photoCardId);
 
+  // 결과가 없을 경우 빈 배열 반환
   if (photoCardIds.length === 0) {
     return {
       success: true,
@@ -80,10 +82,11 @@ const getMyPhotocards: GetMyPhotocards = async (
     };
   }
 
-  // 2. 포토카드 정보 조회 - 필터링 조건을 쿼리 내에서 처리
+  // 포토카드 정보 조회 및 필터링
   const photoCards = await prisma.photoCard.findMany({
     where: {
       id: { in: photoCardIds },
+      // 키워드 검색
       ...(keyword
         ? {
             OR: [
@@ -92,7 +95,9 @@ const getMyPhotocards: GetMyPhotocards = async (
             ],
           }
         : {}),
+      // 등급 필터
       ...(grade && grade !== "ALL" ? { grade } : {}),
+      // 장르 필터
       ...(genre && genre !== "전체" ? { genre } : {}),
     },
     include: {
@@ -104,11 +109,12 @@ const getMyPhotocards: GetMyPhotocards = async (
     },
   });
 
-  // 3. 포토카드 정보와 수량을 매핑
+  // 수량 정보 매핑
   const userPhotoCardMap = new Map(
     userPhotoCards.map((card) => [card.photoCardId, card.quantity])
   );
 
+  // 필터링 결과 생성
   const filteredPhotoCards = photoCards.filter((photoCard) =>
     userPhotoCardMap.has(photoCard.id)
   );
@@ -129,6 +135,7 @@ const getMyPhotocards: GetMyPhotocards = async (
     })
   );
 
+  // 최종 응답 반환
   return {
     success: true,
     userNickname: currentUser.nickname,
@@ -139,7 +146,9 @@ const getMyPhotocards: GetMyPhotocards = async (
   };
 };
 
-// 사용자가 보유한 등급별 카드 개수 조회 함수
+/**
+ * 사용자가 보유한 등급별 카드 개수를 조회하는 함수
+ */
 const getGradeCounts = async (userId: string): Promise<GradeCounts> => {
   // 등급별 카드 개수 초기화
   const gradeCounts: GradeCounts = {
@@ -149,7 +158,7 @@ const getGradeCounts = async (userId: string): Promise<GradeCounts> => {
     LEGENDARY: 0,
   };
 
-  // Prisma groupBy 쿼리를 사용하여 등급별 개수 조회
+  // SQL 쿼리로 등급별 개수 집계
   const result = await prisma.$queryRaw`
     SELECT p."grade", SUM(u."quantity") as count
     FROM "UserPhotoCard" u
@@ -158,7 +167,7 @@ const getGradeCounts = async (userId: string): Promise<GradeCounts> => {
     GROUP BY p."grade"
   `;
 
-  // 결과 배열을 순회하며 등급별 개수 설정
+  // 결과 매핑
   (result as { grade: string; count: string }[]).forEach((item) => {
     const grade = item.grade;
     if (grade in gradeCounts) {
@@ -169,7 +178,7 @@ const getGradeCounts = async (userId: string): Promise<GradeCounts> => {
   return gradeCounts;
 };
 
-// 서비스 함수들을 객체로 묶어서 내보내기
+// 서비스 함수 내보내기
 const photocardService = {
   getMyPhotocards,
   getGradeCounts,
