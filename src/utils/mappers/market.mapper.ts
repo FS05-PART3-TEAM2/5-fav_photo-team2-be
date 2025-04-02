@@ -1,5 +1,7 @@
 import {
   MarketCardDto,
+  MarketMeResponse,
+  MarketMyCardDto,
   MarketResponse,
 } from "../../domains/market/types/market.type";
 
@@ -28,6 +30,29 @@ export const toMarketResponse = (
     seller: {
       id: card.seller.id,
       nickname: card.seller.nickname,
+    },
+    createdAt: card.createdAt.toISOString(),
+    updatedAt: card.updatedAt.toISOString(),
+  };
+};
+
+export const toMarketMeResponse = (
+  card: MarketMyCardDto,
+  count: number
+): MarketMeResponse => {
+  return {
+    saleCardId: card.id,
+    status: card.status,
+    name: card.photoCard.name,
+    genre: card.photoCard.genre,
+    grade: card.photoCard.grade,
+    price: card.price,
+    image: card.photoCard.imageUrl,
+    total: card.quantity,
+    remaining: card.quantity - count,
+    creator: {
+      id: card.photoCard.creator.id,
+      nickname: card.photoCard.creator.nickname,
     },
     createdAt: card.createdAt.toISOString(),
     updatedAt: card.updatedAt.toISOString(),
