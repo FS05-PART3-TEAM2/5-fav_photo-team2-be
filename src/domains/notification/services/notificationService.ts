@@ -4,12 +4,18 @@ import { CreateNotificationInput } from "../interfaces/requestWithUser";
 const prisma = new PrismaClient();
 
 // 알림 조회 로직
-export const getUserNotifications = async (userId: string) => {
+export const getUserNotifications = async (
+  userId: string,
+  page: number,
+  limit: number
+) => {
+  const skip = (page - 1) * limit;
   console.log("userId", userId);
   return await prisma.notification.findMany({
     where: { userId },
-
-    orderBy: { createdAt: "desc" }, // 최신순 정렬
+    orderBy: { createdAt: "desc" },
+    skip,
+    take: limit,
   });
 };
 

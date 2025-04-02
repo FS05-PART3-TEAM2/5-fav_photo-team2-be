@@ -9,10 +9,13 @@ export const getNotifications = async (
   res: Response
 ): Promise<void> => {
   const userId = req.user.id;
-
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 5;
   try {
     const notifications = await notificationService.getUserNotifications(
-      userId
+      userId,
+      page,
+      limit
     );
     res.status(200).json({ notifications });
     return;
