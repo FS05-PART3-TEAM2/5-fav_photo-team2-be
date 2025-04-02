@@ -1,14 +1,13 @@
 import { Router } from "express";
-// import authemticate from "../../middlewares/authenticate";,
+import { authenticate } from "../../middlewares/auth.middleware";
+import { RequestHandler } from "express";
+import { requestHandler } from "../../utils/requestHandler";
+import { open } from "./controllers/random-boc.contreller";
+import { status } from "./controllers/random-boc.contreller";
 
 const router = Router();
 
-router.post("/", (req, res) => {
-  res.send("랜덤박스 뽑기~~~~");
-});
+router.get("/", authenticate, requestHandler(status));
 
-router.get("/", (req, res) => {
-  res.send("랜덤박스 조회~~~~");
-});
-
+router.post("/", authenticate, requestHandler(open));
 export default router;

@@ -1,25 +1,43 @@
 import { Request, Response } from "express";
-import * as service from "../services/random-box.service";
+import {
+  drawRandomBox,
+  getRemainingTime,
+} from "../services/random-box.service";
 
-export const open = async (req: Request, res: Response) => {
-  const userId = req.user.id; // 미들웨어에서 토큰 인증 후 주입된 값
+export const open = async (req: Request, res: Response): Promise<void> => {
+  const userId = req.user.id; // 미들웨어에서 인증된 유저 ID
 
+  const pointToAdd = req.body.amount || 10;
   try {
-    const result = await service.openRandomBox(userId);
-    return res.status(200).json(result);
+    const result = await drawRandomBox(userId, pointToAdd);
+    res.status(200).json(result);
+    return;
   } catch (err: any) {
-    if (err.status === 429) {
-      return res.status(429).json({
-        error: "Cooldown active",
-        nextAvailableAt: err.nextAvailableAt,
+    if (err.code === "COOLDOWN") {
+      res.status(429).json({
+        error: err.message,
+        nextAvailableAt: err.nextAvailableAt, // 타임스탬프 or ISO
       });
+      return;
     }
-    return res.status(500).json({ error: "Something went wrong" });
+
+    const cooldown = await getRemainingTime(userId);
+
+    res.status(500).json({ error: "서버 에러 발생", cooldownInfo: cooldown });
+    return;
   }
 };
 
-export const status = async (req: Request, res: Response) => {
+export const status = async (req: Request, res: Response): Promise<void> => {
   const userId = req.user.id;
-  const result = await service.canOpenRandomBox(userId);
-  return res.status(200).json(result);
+
+  try {
+    const result = await getRemainingTime(userId);
+    res.status(200).json(result);
+    return;
+  } catch (err: any) {
+    console.error("Status error:", err);
+    res.status(500).json({ error: "서버 에러 발생" });
+    return;
+  }
 };
