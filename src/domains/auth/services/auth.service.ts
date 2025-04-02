@@ -84,7 +84,6 @@ export const loginService = async (data: LoginInput): Promise<AuthResponse> => {
     status: 200,
     body: {
       message: "로그인 성공",
-      accessToken: accessToken,
       user: {
         id: user.id,
         email: user.email,
