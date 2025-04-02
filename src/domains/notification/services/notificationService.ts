@@ -6,16 +6,21 @@ const prisma = new PrismaClient();
 // 알림 조회 로직
 export const getUserNotifications = async (
   userId: string,
-  page: number,
-  limit: number
+  limit?: number,
+  cursor?: string
 ) => {
-  const skip = (page - 1) * limit;
   console.log("userId", userId);
   return await prisma.notification.findMany({
     where: { userId },
     orderBy: { createdAt: "desc" },
-    skip,
+
     take: limit,
+    ...(cursor
+      ? {
+          skip: 1,
+          cursor: { id: cursor },
+        }
+      : {}),
   });
 };
 
