@@ -26,10 +26,20 @@ const getMarketListCount: ApiSignature = async (req, res) => {
   res.status(200).send(response);
 };
 
+const getMarketMeCount: ApiSignature = async (req, res) => {
+  const queries = req.query;
+  const userId = req.user.id;
+
+  const response = await marketService.getMarketMeCount(queries, userId);
+
+  res.status(200).send(response);
+};
+
 const marketController = {
   getMarketList,
   getMarketMe,
   getMarketListCount,
+  getMarketMeCount,
 };
 
 export default marketController;
