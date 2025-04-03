@@ -1,4 +1,3 @@
-import { MarketOffer } from "@prisma/client";
 import {
   toMarketMeResponse,
   toMarketResponse,
@@ -6,12 +5,13 @@ import {
 import prisma from "../../../utils/prismaClient";
 import {
   GetMarketList,
+  GetMarketListCount,
   GetMarketMeList,
   MarketCardDto,
-  MarketMyCardDto,
   PhotoCardInfo,
 } from "../types/market.type";
 import { MarketOfferDto } from "../../../types/dtos/marketOffer.dto";
+import { allGenres, allGrades, allSaleStatus } from "../../../types/enums.type";
 
 /**
  *
@@ -102,6 +102,46 @@ const getMarketList: GetMarketList = async (queries) => {
 
   // console.log(data);
 
+  /* */
+  let gradeResult = (await prisma.$queryRaw`
+  SELECT "photoCard"."grade", COUNT(*)
+  FROM "SaleCard" AS "saleCard"
+  JOIN "PhotoCard" AS "photoCard" ON "saleCard"."photoCardId" = "photoCard"."id"
+  GROUP BY "photoCard"."grade"
+`) as { grade: string; count: number }[];
+  const gradeMap = new Map(gradeResult.map((r) => [r.grade, Number(r.count)]));
+  const gradeInfo: PhotoCardInfo[] = allGrades.map((genre) => ({
+    name: genre,
+    count: gradeMap.get(genre) || 0,
+  }));
+
+  /* */
+  const genreResult = (await prisma.$queryRaw`
+    SELECT "photoCard"."genre", COUNT(*)
+    FROM "SaleCard" AS "saleCard"
+    JOIN "PhotoCard" AS "photoCard" ON "saleCard"."photoCardId" = "photoCard"."id"
+    GROUP BY "photoCard"."genre"
+  `) as { genre: string; count: number }[];
+  const resultMap = new Map(genreResult.map((r) => [r.genre, Number(r.count)]));
+  const genreInfo: PhotoCardInfo[] = allGenres.map((genre) => ({
+    name: genre,
+    count: resultMap.get(genre) || 0,
+  }));
+
+  /* */
+  let statusResult = await prisma.saleCard.groupBy({
+    by: ["status"],
+    _count: {
+      _all: true,
+    },
+  });
+  const statusMap = new Map(statusResult.map((r) => [r.status, r._count._all]));
+  const statusInfo: PhotoCardInfo[] = allSaleStatus.map((status) => ({
+    name: status,
+    count: statusMap.get(status) || 0,
+  }));
+
+  /* */
   const hasMore = data.length === limit;
   const nextCursor = hasMore
     ? {
@@ -114,6 +154,11 @@ const getMarketList: GetMarketList = async (queries) => {
     hasMore,
     nextCursor,
     list: data,
+    info: {
+      grade: gradeInfo,
+      genre: genreInfo,
+      status: statusInfo,
+    },
   };
 };
 
@@ -283,6 +328,46 @@ const getMarketMe: GetMarketMeList = async (queries, user) => {
     count,
   }));
 
+  // /* */
+  // let gradeResult = (await prisma.$queryRaw`
+  //     SELECT "photoCard"."grade", COUNT(*)
+  //     FROM "SaleCard" AS "saleCard"
+  //     JOIN "PhotoCard" AS "photoCard" ON "saleCard"."photoCardId" = "photoCard"."id"
+  //     WHERE "saleCard"."sellerId" = ${userId}
+  //     GROUP BY "photoCard"."grade"
+  //   `) as { grade: string; count: number }[];
+  // const gradeMap = new Map(gradeResult.map((r) => [r.grade, Number(r.count)]));
+  // const gradeInfo: PhotoCardInfo[] = allGrades.map((genre) => ({
+  //   name: genre,
+  //   count: gradeMap.get(genre) || 0,
+  // }));
+
+  // /* */
+  // const genreResult = (await prisma.$queryRaw`
+  //       SELECT "photoCard"."genre", COUNT(*)
+  //       FROM "SaleCard" AS "saleCard"
+  //       JOIN "PhotoCard" AS "photoCard" ON "saleCard"."photoCardId" = "photoCard"."id"
+  //       GROUP BY "photoCard"."genre"
+  //     `) as { genre: string; count: number }[];
+  // const resultMap = new Map(genreResult.map((r) => [r.genre, Number(r.count)]));
+  // const genreInfo: PhotoCardInfo[] = allGenres.map((genre) => ({
+  //   name: genre,
+  //   count: resultMap.get(genre) || 0,
+  // }));
+
+  // /* */
+  // let statusResult = await prisma.saleCard.groupBy({
+  //   by: ["status"],
+  //   _count: {
+  //     _all: true,
+  //   },
+  // });
+  // const statusMap = new Map(statusResult.map((r) => [r.status, r._count._all]));
+  // const statusInfo: PhotoCardInfo[] = allSaleStatus.map((status) => ({
+  //   name: status,
+  //   count: statusMap.get(status) || 0,
+  // }));
+
   return {
     hasMore,
     nextCursor,
@@ -291,9 +376,31 @@ const getMarketMe: GetMarketMeList = async (queries, user) => {
   };
 };
 
+const getMarketListCount: GetMarketListCount = async (queries) => {
+  const { genre, grade, status } = queries;
+
+  const count = await prisma.saleCard.count({
+    where: {
+      ...(status && { status: status }),
+      photoCard: {
+        ...(grade && { grade: grade }),
+        ...(genre && { genre: genre }),
+      },
+    },
+  });
+
+  return {
+    grade: grade || "ALL",
+    genre: genre || "ALL",
+    status: status || "ALL",
+    count,
+  };
+};
+
 const marketService = {
   getMarketList,
   getMarketMe,
+  getMarketListCount,
 };
 
 export default marketService;

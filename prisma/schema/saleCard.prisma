@@ -20,4 +20,6 @@ model SaleCard {
   marketOffer MarketOffer?
 
   @@index([sellerId])
+  @@index([status])
+  @@index([photoCardId])
 }

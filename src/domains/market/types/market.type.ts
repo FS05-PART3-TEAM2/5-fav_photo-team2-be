@@ -1,9 +1,14 @@
 import { z } from "zod";
 import {
+  MarketListCountQuerySchema,
   MarketListQuerySchema,
   MarketMeQuerySchema,
 } from "../validators/market.validator";
 import { ExchangeOffer, SaleCard } from "@prisma/client";
+
+export type MarketListQuery = z.infer<typeof MarketListQuerySchema>;
+export type MarketListCountQuery = z.infer<typeof MarketListCountQuerySchema>;
+export type MarketMeQuery = z.infer<typeof MarketMeQuerySchema>;
 
 export type GetMarketList = (
   queries: MarketListQuery
@@ -12,13 +17,25 @@ export type GetMarketMeList = (
   queires: MarketMeQuery,
   user: { id: string; role: string }
 ) => Promise<MarketMeListResponse>;
+export type GetMarketListCount = (
+  queries: MarketListCountQuery
+) => Promise<MarketListCountResponse>;
 
-export type MarketListQuery = z.infer<typeof MarketListQuerySchema>;
-export type MarketMeQuery = z.infer<typeof MarketMeQuerySchema>;
+export interface MarketListCountResponse {
+  grade: string;
+  genre: string;
+  status: string;
+  count: number;
+}
 
 export interface PhotoCardInfo {
   name: string;
   count: number;
+}
+export interface FilterPhotoCard {
+  grade: PhotoCardInfo[] | null;
+  genre: PhotoCardInfo[] | null;
+  status: PhotoCardInfo[] | null;
 }
 
 export interface MarketListResponse {
@@ -28,6 +45,7 @@ export interface MarketListResponse {
     createdAt: string;
   } | null;
   list: MarketResponse[];
+  info: FilterPhotoCard;
 }
 export interface MarketMeListResponse {
   hasMore: boolean;
