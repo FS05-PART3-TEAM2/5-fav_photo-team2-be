@@ -6,12 +6,18 @@ import prisma from "../../../utils/prismaClient";
 import {
   GetMarketList,
   GetMarketListCount,
+  GetMarketMeCount,
   GetMarketMeList,
   MarketCardDto,
   PhotoCardInfo,
 } from "../types/market.type";
-import { MarketOfferDto } from "../../../types/dtos/marketOffer.dto";
-import { allGenres, allGrades, allSaleStatus } from "../../../types/enums.type";
+import { MarketOfferDto } from "../../../utils/dtos/marketOffer.dto";
+import {
+  allGenres,
+  allGrades,
+  allMarketStatus,
+  allSaleStatus,
+} from "../../../types/enums.type";
 
 /**
  *
@@ -279,103 +285,97 @@ const getMarketMe: GetMarketMeList = async (queries, user) => {
       }
     : null;
 
-  const saleCards = await prisma.saleCard.findMany({
-    where: {
-      sellerId: userId,
-      status: {
-        in: ["ON_SALE", "SOLD_OUT"],
-      },
-    },
-    include: {
-      photoCard: true, // 관계된 PhotoCard 정보 포함
-    },
-  });
-  const exchangeCards = await prisma.exchangeOffer.findMany({
-    where: {
-      offererId: userId,
-      status: {
-        in: ["PENDING"],
-      },
-    },
-    include: {
+  /* */
+  const marketOffersTmp = await prisma.marketOffer.findMany({
+    where: { ownerId: userId },
+    select: {
+      type: true,
       saleCard: {
-        include: {
-          photoCard: true,
+        select: {
+          photoCard: {
+            select: {
+              grade: true,
+              genre: true,
+            },
+          },
+          status: true,
+        },
+      },
+      exchangeOffer: {
+        select: {
+          saleCard: {
+            select: {
+              photoCard: {
+                select: {
+                  grade: true,
+                  genre: true,
+                },
+              },
+              status: true,
+            },
+          },
+          status: true,
         },
       },
     },
   });
 
-  // 판매카드와 교환카드의 포토카드 묶기
-  const allPhotoCards = [
-    ...saleCards.map((card) => card.photoCard),
-    ...exchangeCards.map((offer) => offer.saleCard.photoCard),
-  ];
+  // gradeInfo
+  const gradeInfo = allGrades.map((grade) => {
+    const count = marketOffersTmp.filter(
+      (offer) =>
+        (offer.type === "SALE" && offer.saleCard?.photoCard?.grade === grade) ||
+        (offer.type === "EXCHANGE" &&
+          offer.exchangeOffer?.saleCard?.photoCard?.grade === grade)
+    ).length;
 
-  // 등급별 그룹화
-  const grouped = allPhotoCards.reduce<Record<string, number>>(
-    (acc, photoCard) => {
-      const grade = photoCard.grade;
-      acc[grade] = (acc[grade] || 0) + 1;
-      return acc;
-    },
-    {}
-  );
+    return { name: grade, count };
+  });
 
-  // 배열 형태로 변환
-  const photoCardInfo = Object.entries(grouped).map(([name, count]) => ({
-    name,
-    count,
-  }));
+  // genreInfo
+  const genreInfo = allGenres.map((genre) => {
+    const count = marketOffersTmp.filter(
+      (offer) =>
+        (offer.type === "SALE" && offer.saleCard?.photoCard?.genre === genre) ||
+        (offer.type === "EXCHANGE" &&
+          offer.exchangeOffer?.saleCard?.photoCard?.genre === genre)
+    ).length;
 
-  // /* */
-  // let gradeResult = (await prisma.$queryRaw`
-  //     SELECT "photoCard"."grade", COUNT(*)
-  //     FROM "SaleCard" AS "saleCard"
-  //     JOIN "PhotoCard" AS "photoCard" ON "saleCard"."photoCardId" = "photoCard"."id"
-  //     WHERE "saleCard"."sellerId" = ${userId}
-  //     GROUP BY "photoCard"."grade"
-  //   `) as { grade: string; count: number }[];
-  // const gradeMap = new Map(gradeResult.map((r) => [r.grade, Number(r.count)]));
-  // const gradeInfo: PhotoCardInfo[] = allGrades.map((genre) => ({
-  //   name: genre,
-  //   count: gradeMap.get(genre) || 0,
-  // }));
+    return { name: genre, count };
+  });
 
-  // /* */
-  // const genreResult = (await prisma.$queryRaw`
-  //       SELECT "photoCard"."genre", COUNT(*)
-  //       FROM "SaleCard" AS "saleCard"
-  //       JOIN "PhotoCard" AS "photoCard" ON "saleCard"."photoCardId" = "photoCard"."id"
-  //       GROUP BY "photoCard"."genre"
-  //     `) as { genre: string; count: number }[];
-  // const resultMap = new Map(genreResult.map((r) => [r.genre, Number(r.count)]));
-  // const genreInfo: PhotoCardInfo[] = allGenres.map((genre) => ({
-  //   name: genre,
-  //   count: resultMap.get(genre) || 0,
-  // }));
+  // statusInfo
+  const statusInfo = allMarketStatus.map((status) => {
+    const count = marketOffersTmp.filter(
+      (offer) =>
+        (status === "PENDING" &&
+          offer.type === "EXCHANGE" &&
+          offer.exchangeOffer?.status === status) ||
+        (status !== "PENDING" &&
+          offer.type === "SALE" &&
+          offer.saleCard?.status === status)
+    ).length;
 
-  // /* */
-  // let statusResult = await prisma.saleCard.groupBy({
-  //   by: ["status"],
-  //   _count: {
-  //     _all: true,
-  //   },
-  // });
-  // const statusMap = new Map(statusResult.map((r) => [r.status, r._count._all]));
-  // const statusInfo: PhotoCardInfo[] = allSaleStatus.map((status) => ({
-  //   name: status,
-  //   count: statusMap.get(status) || 0,
-  // }));
+    return { name: status, count };
+  });
 
   return {
     hasMore,
     nextCursor,
     list: data,
-    photoCardInfo,
+    info: {
+      grade: gradeInfo,
+      genre: genreInfo,
+      status: statusInfo,
+    },
   };
 };
 
+/**
+ *
+ * @param queries
+ * @returns
+ */
 const getMarketListCount: GetMarketListCount = async (queries) => {
   const { genre, grade, status } = queries;
 
@@ -397,10 +397,94 @@ const getMarketListCount: GetMarketListCount = async (queries) => {
   };
 };
 
+/**
+ *
+ * @param queries
+ * @param userId
+ * @returns
+ */
+const getMarketMeCount: GetMarketMeCount = async (queries, userId) => {
+  const { genre, grade, status } = queries;
+
+  const isExchange = status === "PENDING";
+  const isSale = status === "ON_SALE" || status === "SOLD_OUT";
+
+  let where: any = {
+    ownerId: userId,
+  };
+
+  if (!status) {
+    // status 없을 때 (모두 사용)
+    where = {
+      ownerId: userId,
+      OR: [
+        {
+          type: "SALE",
+          saleCard: {
+            photoCard: {
+              ...(grade ? { grade } : {}),
+              ...(genre ? { genre } : {}),
+            },
+          },
+        },
+        {
+          type: "EXCHANGE",
+          exchangeOffer: {
+            saleCard: {
+              photoCard: {
+                ...(grade ? { grade } : {}),
+                ...(genre ? { genre } : {}),
+              },
+            },
+          },
+        },
+      ],
+    };
+  } else if (isSale) {
+    // ON_SALE | SOLD_OUT
+    where = {
+      ownerId: userId,
+      type: "SALE",
+      saleCard: {
+        status,
+        photoCard: {
+          ...(grade ? { grade } : {}),
+          ...(genre ? { genre } : {}),
+        },
+      },
+    };
+  } else if (isExchange) {
+    // PENDING
+    where = {
+      ownerId: userId,
+      type: "EXCHANGE",
+      exchangeOffer: {
+        status: "PENDING",
+        saleCard: {
+          photoCard: {
+            ...(grade ? { grade } : {}),
+            ...(genre ? { genre } : {}),
+          },
+        },
+      },
+    };
+  }
+
+  const count = await prisma.marketOffer.count({ where });
+
+  return {
+    grade: grade || "ALL",
+    genre: genre || "ALL",
+    status: status || "ALL",
+    count,
+  };
+};
+
 const marketService = {
   getMarketList,
   getMarketMe,
   getMarketListCount,
+  getMarketMeCount,
 };
 
 export default marketService;

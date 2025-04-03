@@ -29,6 +29,12 @@ router.get(
   validateAll({ query: MarketMeQuerySchema }),
   requestHandler(marketController.getMarketMe)
 );
+router.get(
+  "/me/count",
+  authenticate,
+  validateAll({ query: MarketMeQuerySchema }),
+  requestHandler(marketController.getMarketMeCount)
+);
 
 // SSR용 기본 상세 정보 엔드포인트
 router.get(
