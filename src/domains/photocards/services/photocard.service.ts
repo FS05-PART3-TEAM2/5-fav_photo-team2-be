@@ -156,7 +156,7 @@ const getGradeCounts = async (userId: string): Promise<GradeCounts> => {
 
   // SQL 쿼리로 등급별 개수 집계
   const result = await prisma.$queryRaw`
-    SELECT p."grade", SUM(u."quantity") as count
+    SELECT p."grade", COUNT(DISTINCT u."photoCardId") as count
     FROM "UserPhotoCard" u
     JOIN "PhotoCard" p ON u."photoCardId" = p."id"
     WHERE u."ownerId" = ${userId}
