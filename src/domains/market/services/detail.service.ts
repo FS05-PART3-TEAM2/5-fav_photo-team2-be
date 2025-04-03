@@ -198,8 +198,8 @@ export const getExchangeDetail = async (
   const response: ExchangeInfo = {
     id: saleCard.id,
     isMine,
-    receivedOffers: null,
-    myOffers: null,
+    receivedOffers: [],
+    myOffers: [],
   };
 
   // 내 카드인 경우: 받은 교환 제안 조회

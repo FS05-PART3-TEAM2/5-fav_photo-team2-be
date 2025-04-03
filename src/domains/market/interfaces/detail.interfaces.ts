@@ -40,18 +40,12 @@ export interface BasicDetail {
 export interface ExchangeInfo {
   id: string;
   isMine: boolean;
-  receivedOffers: Offer[] | null;
-  myOffers: Offer[] | null;
+  receivedOffers: Offer[];
+  myOffers: Offer[];
 }
 
 // 마켓 전체 상세 응답 인터페이스 (기본 정보 + 교환 제안 정보)
 export interface DetailResponse extends BasicDetail {
-  receivedOffers: Offer[] | null;
-  myOffers: Offer[] | null;
+  receivedOffers: Offer[];
+  myOffers: Offer[];
 }
-
-// 이전 인터페이스 이름 호환성 유지를 위한 타입 별칭
-export type MarketItemOffer = Offer;
-export type MarketBasicDetailResponse = BasicDetail;
-export type MarketExchangeDetailResponse = ExchangeInfo;
-export type MarketDetailResponse = DetailResponse;
