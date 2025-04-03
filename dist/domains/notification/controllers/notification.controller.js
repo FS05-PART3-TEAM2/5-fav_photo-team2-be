@@ -38,9 +38,15 @@ const notificationService = __importStar(require("../services/notificationServic
 // 알림 조회 요청 처리
 const getNotifications = async (req, res) => {
     const userId = req.user.id;
+    const rawLimit = req.query.limit;
+    const limit = rawLimit ? parseInt(req.query.limit) : undefined;
+    const cursor = req.query.cursor;
     try {
-        const notifications = await notificationService.getUserNotifications(userId);
-        res.status(200).json({ notifications });
+        const notifications = await notificationService.getUserNotifications(userId, limit, cursor);
+        const nextCursor = notifications.length > 0
+            ? notifications[notifications.length - 1].id
+            : null;
+        res.status(200).json({ notifications, nextCursor });
         return;
     }
     catch (error) {

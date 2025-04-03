@@ -4,11 +4,18 @@ exports.createNotification = exports.markNotificationAsRead = exports.getUserNot
 const client_1 = require("@prisma/client");
 const prisma = new client_1.PrismaClient();
 // 알림 조회 로직
-const getUserNotifications = async (userId) => {
+const getUserNotifications = async (userId, limit, cursor) => {
     console.log("userId", userId);
     return await prisma.notification.findMany({
         where: { userId },
-        orderBy: { createdAt: "desc" }, // 최신순 정렬
+        orderBy: { createdAt: "desc" },
+        take: limit,
+        ...(cursor
+            ? {
+                skip: 1,
+                cursor: { id: cursor },
+            }
+            : {}),
     });
 };
 exports.getUserNotifications = getUserNotifications;

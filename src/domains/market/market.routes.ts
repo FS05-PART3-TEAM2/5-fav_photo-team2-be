@@ -13,6 +13,7 @@ import { authenticate } from "../../middlewares/auth.middleware";
 
 const router = Router();
 
+// 마켓 리스트 관련 라우트
 router.get(
   "/",
   validateAll({ query: MarketListQuerySchema }),
@@ -36,14 +37,12 @@ router.get(
   requestHandler(marketController.getMarketMeCount)
 );
 
-// SSR용 기본 상세 정보 엔드포인트
 router.get(
   "/:id/detail",
   authenticate,
   marketDetailController.getMarketItemBasicDetail
 );
 
-// CSR용 교환 제안 정보 엔드포인트
 router.get(
   "/:id/exchange",
   authenticate,

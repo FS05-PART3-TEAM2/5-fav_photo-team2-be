@@ -1,13 +1,10 @@
 import { Request, Response, NextFunction } from "express";
-import {
-  getMarketItemBasicDetail,
-  getMarketItemExchangeDetail,
-} from "../services/detail.service";
+import { getBasicDetail, getExchangeDetail } from "../services/detail.service";
 
 /**
  * 요청에서 사용자 ID를 추출하는 헬퍼 함수
  */
-function extractUserId(req: Request, res: Response): string | null {
+function getUserId(req: Request, res: Response): string | null {
   if (!req.user) {
     res.status(401).json({
       success: false,
@@ -22,17 +19,17 @@ function extractUserId(req: Request, res: Response): string | null {
  * 마켓플레이스 기본 상세 정보 조회 (SSR용)
  * GET /api/market/:id/detail
  */
-export const getMarketItemBasicDetailController = async (
+export const getBasicDetailCtrl = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
     const { id } = req.params;
-    const userId = extractUserId(req, res);
+    const userId = getUserId(req, res);
     if (!userId) return;
 
-    const response = await getMarketItemBasicDetail(id, userId);
+    const response = await getBasicDetail(id, userId);
     res.json({
       success: true,
       data: response,
@@ -51,17 +48,17 @@ export const getMarketItemBasicDetailController = async (
  * 마켓플레이스 교환 제안 정보 조회 (CSR용)
  * GET /api/market/:id/exchange
  */
-export const getMarketItemExchangeController = async (
+export const getExchangeCtrl = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
     const { id } = req.params;
-    const userId = extractUserId(req, res);
+    const userId = getUserId(req, res);
     if (!userId) return;
 
-    const response = await getMarketItemExchangeDetail(id, userId);
+    const response = await getExchangeDetail(id, userId);
     res.json({
       success: true,
       data: response,
@@ -77,7 +74,8 @@ export const getMarketItemExchangeController = async (
   }
 };
 
+// 라우터에서 참조하는 이름 유지
 export default {
-  getMarketItemBasicDetail: getMarketItemBasicDetailController,
-  getMarketItemExchange: getMarketItemExchangeController,
+  getMarketItemBasicDetail: getBasicDetailCtrl,
+  getMarketItemExchange: getExchangeCtrl,
 };

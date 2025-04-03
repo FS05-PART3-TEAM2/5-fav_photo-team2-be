@@ -1,23 +1,23 @@
 import { PrismaClient } from "@prisma/client";
 import {
-  MarketBasicDetailResponse,
-  MarketExchangeDetailResponse,
-  MarketItemOffer,
+  BasicDetail,
+  ExchangeInfo,
+  Offer,
 } from "../interfaces/detail.interfaces";
 
 const prisma = new PrismaClient();
 
 /**
- * 마켓 아이템 기본 상세 정보 조회 (SSR용)
+ * 마켓 아이템 기본 상세 정보 조회
  *
  * @param id 판매 카드 ID
  * @param userId 현재 로그인한 사용자 ID
  * @returns 마켓 아이템 기본 상세 정보
  */
-export const getMarketItemBasicDetail = async (
+export const getBasicDetail = async (
   id: string,
   userId: string
-): Promise<MarketBasicDetailResponse> => {
+): Promise<BasicDetail> => {
   // 판매 카드 정보 조회
   const saleCard = await prisma.saleCard.findUnique({
     where: { id },
@@ -60,7 +60,7 @@ export const getMarketItemBasicDetail = async (
     );
   }
 
-  // 사용자가 판매자인지 여부 확인 (isMine)
+  // 사용자가 판매자인지 여부 확인
   const isMine = saleCard.sellerId === userId;
 
   // 현재 사용자의 포토카드 소유 정보 조회
@@ -88,7 +88,7 @@ export const getMarketItemBasicDetail = async (
   );
 
   // 기본 응답 구성
-  const response: MarketBasicDetailResponse = {
+  const response: BasicDetail = {
     id: saleCard.id,
     userNickname: creator.nickname,
     imageUrl: photoCard.imageUrl,
@@ -118,10 +118,7 @@ export const getMarketItemBasicDetail = async (
  * @param userId 현재 사용자 ID
  * @returns 교환 제안 상세 정보
  */
-async function getExchangeOfferDetails(
-  offer: any,
-  userId: string
-): Promise<MarketItemOffer> {
+async function getOfferDetails(offer: any, userId: string): Promise<Offer> {
   // 제안된 카드 정보 조회
   const userPhotoCard = await prisma.userPhotoCard.findUnique({
     where: { id: offer.userPhotoCardId },
@@ -161,16 +158,16 @@ async function getExchangeOfferDetails(
 }
 
 /**
- * 마켓 아이템 교환 제안 정보 조회 (CSR용)
+ * 마켓 아이템 교환 제안 정보 조회
  *
  * @param id 판매 카드 ID
  * @param userId 현재 로그인한 사용자 ID
  * @returns 마켓 아이템 교환 제안 정보
  */
-export const getMarketItemExchangeDetail = async (
+export const getExchangeDetail = async (
   id: string,
   userId: string
-): Promise<MarketExchangeDetailResponse> => {
+): Promise<ExchangeInfo> => {
   // 판매 카드 정보 조회
   const saleCard = await prisma.saleCard.findUnique({
     where: { id },
@@ -180,11 +177,11 @@ export const getMarketItemExchangeDetail = async (
     throw new Error(`ID가 ${id}인 판매 카드를 찾을 수 없습니다.`);
   }
 
-  // 사용자가 판매자인지 여부 확인 (isMine)
+  // 사용자가 판매자인지 여부 확인
   const isMine = saleCard.sellerId === userId;
 
   // 응답 기본 구조
-  const response: MarketExchangeDetailResponse = {
+  const response: ExchangeInfo = {
     id: saleCard.id,
     isMine,
     receivedOffers: null,
@@ -202,8 +199,8 @@ export const getMarketItemExchangeDetail = async (
 
     // 교환 제안 상세 정보 조회
     if (exchangeOffers.length > 0) {
-      const offersWithDetails: MarketItemOffer[] = await Promise.all(
-        exchangeOffers.map((offer) => getExchangeOfferDetails(offer, userId))
+      const offersWithDetails: Offer[] = await Promise.all(
+        exchangeOffers.map((offer) => getOfferDetails(offer, userId))
       );
       response.receivedOffers = offersWithDetails;
     } else {
@@ -220,8 +217,8 @@ export const getMarketItemExchangeDetail = async (
     });
 
     if (myOffers.length > 0) {
-      const myOffersWithDetails: MarketItemOffer[] = await Promise.all(
-        myOffers.map((offer) => getExchangeOfferDetails(offer, userId))
+      const myOffersWithDetails: Offer[] = await Promise.all(
+        myOffers.map((offer) => getOfferDetails(offer, userId))
       );
       response.myOffers = myOffersWithDetails;
     } else {

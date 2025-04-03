@@ -16,8 +16,18 @@ const isProd = process.env.NODE_ENV === "production";
 const signupService = async (data) => {
     const { email, password, nickname } = data;
     const existUser = await prismaClient_1.default.user.findUnique({ where: { email } });
+    const existNickname = await prismaClient_1.default.user.findUnique({
+        where: { nickname },
+    });
+    const isComplexPassword = /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[\W_]).{9,}$/.test(password);
     if (existUser) {
         throw new errors_1.CustomError("이미 존재하는 이메일입니다.", 409);
+    }
+    if (existNickname) {
+        throw new errors_1.CustomError("이미 존재하는 닉네임입니다.", 409);
+    }
+    if (!isComplexPassword) {
+        throw new errors_1.CustomError("비밀번호는 영어, 숫자, 특수문자를 포함한 9자 이상이어야 합니다.", 400);
     }
     const hashedPassword = await bcrypt_1.default.hash(password, 10);
     const user = await prismaClient_1.default.user.create({
@@ -55,7 +65,6 @@ const loginService = async (data) => {
         status: 200,
         body: {
             message: "로그인 성공",
-            accessToken: accessToken,
             user: {
                 id: user.id,
                 email: user.email,
