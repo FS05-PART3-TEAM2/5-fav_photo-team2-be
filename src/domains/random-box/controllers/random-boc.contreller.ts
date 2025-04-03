@@ -48,7 +48,7 @@ export const status = async (req: Request, res: Response): Promise<void> => {
 };
 
 // 박스 선택 요청 컨트롤러
-export const openBox = async (req: Request, res: Response): void => {
+export const openBox = async (req: Request, res: Response): Promise<void> => {
   const userBox = req.body.boxNumber;
 
   // 유효성 검사
