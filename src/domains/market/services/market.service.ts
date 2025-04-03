@@ -11,7 +11,7 @@ import {
   MarketCardDto,
   PhotoCardInfo,
 } from "../types/market.type";
-import { MarketOfferDto } from "../../../types/dtos/marketOffer.dto";
+import { MarketOfferDto } from "../../../utils/dtos/marketOffer.dto";
 import {
   allGenres,
   allGrades,

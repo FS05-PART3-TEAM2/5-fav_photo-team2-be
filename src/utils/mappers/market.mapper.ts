@@ -3,7 +3,7 @@ import {
   MarketMeResponse,
   MarketResponse,
 } from "../../domains/market/types/market.type";
-import { MarketOfferDto } from "../../types/dtos/marketOffer.dto";
+import { MarketOfferDto } from "../dtos/marketOffer.dto";
 
 export const toMarketResponse = (
   card: MarketCardDto,
