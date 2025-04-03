@@ -10,16 +10,7 @@ export const PhotocardsQuerySchema = z.object({
     .enum(["전체", "Nature", "Animal", "Portrait", "Cityscape", "Abstract"])
     .optional()
     .default("전체"),
-  sortOption: z
-    .object({
-      sortBy: z.enum(["createdAt"]).optional().default("createdAt"),
-      order: z.enum(["desc", "asc"]).optional().default("desc"),
-    })
-    .optional()
-    .default({
-      sortBy: "createdAt",
-      order: "desc",
-    }),
+  sort: z.enum(["desc", "asc"]).optional().default("desc"),
   limit: z
     .string()
     .optional()

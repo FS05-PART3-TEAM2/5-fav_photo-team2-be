@@ -8,7 +8,6 @@ import {
   GradeCounts,
 } from "../types/photocard.type";
 
-// Prisma 클라이언트 생성
 const prisma = new PrismaClient();
 
 /**
@@ -18,7 +17,7 @@ const getMyPhotocards: GetMyPhotocards = async (
   userId: string,
   queries: MyPhotocardsQuery
 ): Promise<MyPhotocardsResponse> => {
-  const { keyword, grade, genre, sortOption, limit, cursor } = queries;
+  const { keyword, grade, genre, sort, limit, cursor } = queries;
 
   // 사용자 정보 조회
   const currentUser = await prisma.user.findUnique({
@@ -50,10 +49,7 @@ const getMyPhotocards: GetMyPhotocards = async (
           }
         : {}),
     },
-    orderBy: [
-      { createdAt: sortOption?.order || ("desc" as any) },
-      { id: "desc" },
-    ],
+    orderBy: [{ createdAt: sort || "desc" }, { id: "desc" }],
     take: limit,
   });
 
