@@ -4,6 +4,7 @@ import marketDetailController from "./controllers/detail.controller";
 import { requestHandler } from "../../utils/requestHandler";
 import { validateAll } from "../../middlewares/validator.middleware";
 import {
+  MarketListCountQuerySchema,
   MarketListQuerySchema,
   MarketMeQuerySchema,
 } from "./validators/market.validator";
@@ -16,6 +17,11 @@ router.get(
   "/",
   validateAll({ query: MarketListQuerySchema }),
   requestHandler(marketController.getMarketList)
+);
+router.get(
+  "/count",
+  validateAll({ query: MarketListCountQuerySchema }),
+  requestHandler(marketController.getMarketListCount)
 );
 router.get(
   "/me",
