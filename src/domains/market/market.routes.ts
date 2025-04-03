@@ -24,7 +24,19 @@ router.get(
   requestHandler(marketController.getMarketMe)
 );
 
-router.get("/:id", authenticate, marketDetailController.getMarketItemDetail);
+// SSR용 기본 상세 정보 엔드포인트
+router.get(
+  "/:id/detail",
+  authenticate,
+  marketDetailController.getMarketItemBasicDetail
+);
+
+// CSR용 교환 제안 정보 엔드포인트
+router.get(
+  "/:id/exchange",
+  authenticate,
+  marketDetailController.getMarketItemExchange
+);
 
 // Exchange routes
 router.patch("/exchange/:id/decline", authenticate, declineOfferController);

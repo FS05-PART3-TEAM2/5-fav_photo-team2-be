@@ -11,8 +11,15 @@ export interface MarketItemOffer {
   createdAt: string;
 }
 
-// 마켓 상세 응답 인터페이스
-export interface MarketDetailResponse {
+// 교환 상세 정보 인터페이스
+export interface ExchangeDetail {
+  grade: string;
+  genre: string;
+  description: string;
+}
+
+// SSR용 기본 상세 정보 인터페이스
+export interface MarketBasicDetailResponse {
   id: string;
   userNickname: string;
   imageUrl: string;
@@ -26,11 +33,19 @@ export interface MarketDetailResponse {
   totalOwnAmount: number;
   createdAt: string;
   isMine: boolean;
-  exchangeDetail: {
-    grade: string;
-    genre: string;
-    description: string;
-  };
+  exchangeDetail: ExchangeDetail;
+}
+
+// CSR용 교환 제안 정보 인터페이스
+export interface MarketExchangeDetailResponse {
+  id: string;
+  isMine: boolean;
+  receivedOffers: MarketItemOffer[] | null;
+  myOffers: MarketItemOffer[] | null;
+}
+
+// 마켓 전체 상세 응답 인터페이스 (기본 정보 + 교환 제안 정보)
+export interface MarketDetailResponse extends MarketBasicDetailResponse {
   receivedOffers: MarketItemOffer[] | null;
   myOffers: MarketItemOffer[] | null;
 }
