@@ -38,60 +38,6 @@ export const getRemainingTime = async (
   };
 };
 
-// 랜덤박스 뽑기 처리 (쿨타임 검사 + 포인트 추가)
-export const drawRandomBox = async (userId: string, pointToAdd: number) => {
-  // 쿨타임 확인
-  const remaining = await getRemainingTime(userId);
-  console.log('remaining', remaining);
-
-  // 쿨타임 남았으면 에러 처리
-  if (!remaining.canDraw) {
-    throw {
-      code: 'COOLDOWN_ACTIVE',
-      message: `아직 ${Math.ceil(
-        remaining.remainingSeconds / 60
-      )}분 남았습니다.`,
-      nextAvailableAt: new Date(Date.now() + remaining.remainingSeconds * 1000),
-    };
-  }
-
-  // 랜덤박스 뽑기 기록 생성
-  await prisma.randomBoxDraw.create({
-    data: {
-      userId,
-      earnedPoints: pointToAdd,
-    },
-  });
-
-  // point 테이블에 포인트가 없으면 생성하고, 있으면 업데이트
-  const existingPoint = await prisma.point.findUnique({
-    where: { userId },
-  });
-
-  if (existingPoint) {
-    await prisma.point.update({
-      where: { userId },
-      data: {
-        points: {
-          increment: pointToAdd,
-        },
-      },
-    });
-  } else {
-    await prisma.point.create({
-      data: {
-        userId,
-        points: pointToAdd,
-      },
-    });
-  }
-
-  return {
-    message: '뽑기 성공',
-    addedPoint: pointToAdd,
-  };
-};
-
 // 확률 테이블 기반 포인트 추첨
 // 균등 분포 실수 ( 모든 값이 나올 확률이 같음. )
 // 0 ~ 100 중에서 어느 구간에서 멈추는가에 따라 확률이 정해지는건데 (ex. 25면 0~40인 0포인트, 99.991이면 99.99~100 인 1000포인트 )
@@ -111,12 +57,13 @@ export const getRandomPoint = (
     acc += item.chance;
     if (rand <= acc) return item.point; // 아까 랜덤으로 나온 rand 값이 조건 만족 하면 위에서 추가한 배열의 point 값이 반환 됨
   }
+
   //fallback
   return 0;
 };
 
 // 박스 뽑기 서비스 로직
-export const drawBox = (userPick: number) => {
+export const drawBox = async (userId: string, userPick: number) => {
   const boxes = [1, 2, 3];
 
   // 3개 중 하나를 무작위로 당첨 박스로 지정
@@ -136,11 +83,39 @@ export const drawBox = (userPick: number) => {
 
   const point = getRandomPoint(rewardTable);
 
+  const existingPoint = await prisma.point.findUnique({
+    where: { userId },
+  });
+
+  await prisma.$transaction(async (tx) => {
+    if (existingPoint) {
+      await tx.point.update({
+        where: { userId },
+        data: {
+          points: { increment: point },
+        },
+      });
+    } else {
+      await tx.point.create({
+        data: {
+          userId,
+          points: point,
+        },
+      });
+    }
+
+    await tx.randomBoxDraw.create({
+      data: {
+        userId,
+        earnedPoints: point,
+        createdAt: new Date(), // optional
+      },
+    });
+  });
+
   return {
     selectedBox: userPick,
     isHit,
     point,
-    correctBox: winningBox,
-    boxMapping,
   };
 };
