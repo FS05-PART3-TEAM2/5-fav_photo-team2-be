@@ -1,12 +1,26 @@
 import { z } from "zod";
-import { MarketListQuerySchema } from "../validators/market.validator";
-import { SaleCardStatus } from "@prisma/client";
+import {
+  MarketListQuerySchema,
+  MarketMeQuerySchema,
+} from "../validators/market.validator";
+import { ExchangeOffer, SaleCard } from "@prisma/client";
 
 export type GetMarketList = (
   queries: MarketListQuery
 ) => Promise<MarketListResponse>;
+export type GetMarketMeList = (
+  queires: MarketMeQuery,
+  user: { id: string; role: string }
+) => Promise<MarketMeListResponse>;
 
 export type MarketListQuery = z.infer<typeof MarketListQuerySchema>;
+export type MarketMeQuery = z.infer<typeof MarketMeQuerySchema>;
+
+export interface PhotoCardInfo {
+  name: string;
+  count: number;
+}
+
 export interface MarketListResponse {
   hasMore: boolean;
   nextCursor: {
@@ -15,6 +29,16 @@ export interface MarketListResponse {
   } | null;
   list: MarketResponse[];
 }
+export interface MarketMeListResponse {
+  hasMore: boolean;
+  nextCursor: {
+    id: string;
+    createdAt: string;
+  } | null;
+  list: MarketMeResponse[];
+  photoCardInfo: PhotoCardInfo[];
+}
+
 export interface MarketResponse {
   saleCardId: string;
   userPhotoCardId: string;
@@ -34,6 +58,23 @@ export interface MarketResponse {
     nickname: string;
   };
   seller: {
+    id: string;
+    nickname: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+export interface MarketMeResponse {
+  saleCardId: string;
+  status: string;
+  name: string;
+  genre: string;
+  grade: string;
+  price: number;
+  image: string;
+  remaining: number;
+  total: number;
+  creator: {
     id: string;
     nickname: string;
   };
@@ -72,4 +113,15 @@ export type MarketCardDto = {
     description: string;
     imageUrl: string;
   };
+};
+export type MarketMyCardDto = {
+  id: string;
+  type: string;
+  ownerId: string;
+  createdAt: Date;
+  updatedAt: Date;
+  saleCardId: string | null;
+  exchangeOfferId: string | null;
+  saleCard: SaleCard | null;
+  exchangeOffer: ExchangeOffer | null;
 };

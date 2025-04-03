@@ -17,11 +17,25 @@ export const signupService = async (
 ): Promise<AuthResponse> => {
   const { email, password, nickname } = data;
   const existUser = await prisma.user.findUnique({ where: { email } });
+  const existNickname = await prisma.user.findUnique({
+    where: { nickname },
+  });
+  const isComplexPassword = /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[\W_]).{9,}$/.test(
+    password
+  );
 
   if (existUser) {
     throw new CustomError("이미 존재하는 이메일입니다.", 409);
   }
-
+  if (existNickname) {
+    throw new CustomError("이미 존재하는 닉네임입니다.", 409);
+  }
+  if (!isComplexPassword) {
+    throw new CustomError(
+      "비밀번호는 영어, 숫자, 특수문자를 포함한 9자 이상이어야 합니다.",
+      400
+    );
+  }
   const hashedPassword = await bcrypt.hash(password, 10);
   const user = await prisma.user.create({
     data: { email, password: hashedPassword, nickname, role: "USER" },
@@ -70,7 +84,6 @@ export const loginService = async (data: LoginInput): Promise<AuthResponse> => {
     status: 200,
     body: {
       message: "로그인 성공",
-      accessToken: accessToken,
       user: {
         id: user.id,
         email: user.email,
