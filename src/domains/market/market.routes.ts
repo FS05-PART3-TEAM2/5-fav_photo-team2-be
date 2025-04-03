@@ -29,6 +29,12 @@ router.get(
   validateAll({ query: MarketMeQuerySchema }),
   requestHandler(marketController.getMarketMe)
 );
+router.get(
+  "/me/count",
+  authenticate,
+  validateAll({ query: MarketMeQuerySchema }),
+  requestHandler(marketController.getMarketMeCount)
+);
 
 router.get("/:id", authenticate, marketDetailController.getMarketItemDetail);
 

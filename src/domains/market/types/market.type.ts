@@ -20,6 +20,10 @@ export type GetMarketMeList = (
 export type GetMarketListCount = (
   queries: MarketListCountQuery
 ) => Promise<MarketListCountResponse>;
+export type GetMarketMeCount = (
+  queries: MarketListCountQuery,
+  userId: string
+) => Promise<MarketListCountResponse>;
 
 export interface MarketListCountResponse {
   grade: string;
@@ -54,7 +58,7 @@ export interface MarketMeListResponse {
     createdAt: string;
   } | null;
   list: MarketMeResponse[];
-  photoCardInfo: PhotoCardInfo[];
+  info: FilterPhotoCard;
 }
 
 export interface MarketResponse {
