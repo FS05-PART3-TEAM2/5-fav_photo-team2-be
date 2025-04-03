@@ -19,8 +19,8 @@ router.get("/count", (0, validator_middleware_1.validateAll)({ query: market_val
 router.get("/me", auth_middleware_1.authenticate, (0, validator_middleware_1.validateAll)({ query: market_validator_1.MarketMeQuerySchema }), (0, requestHandler_1.requestHandler)(market_controller_1.default.getMarketMe));
 router.get("/me/count", auth_middleware_1.authenticate, (0, validator_middleware_1.validateAll)({ query: market_validator_1.MarketMeQuerySchema }), (0, requestHandler_1.requestHandler)(market_controller_1.default.getMarketMeCount));
 // 마켓 상세 정보 관련 라우트
-router.get("/:id/detail", auth_middleware_1.authenticate, detail_controller_1.default.getMarketItemBasicDetail);
-router.get("/:id/exchange", auth_middleware_1.authenticate, detail_controller_1.default.getMarketItemExchange);
+router.get("/:id/detail", auth_middleware_1.authenticate, (0, requestHandler_1.requestHandler)(detail_controller_1.default.getMarketItemBasicDetail));
+router.get("/:id/exchange", auth_middleware_1.authenticate, (0, requestHandler_1.requestHandler)(detail_controller_1.default.getMarketItemExchange));
 // 교환 관련 라우트
 router.patch("/exchange/:id/decline", auth_middleware_1.authenticate, exchange_controller_1.declineOfferController);
 exports.default = router;

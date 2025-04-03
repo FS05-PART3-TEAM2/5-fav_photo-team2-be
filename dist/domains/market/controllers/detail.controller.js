@@ -3,28 +3,28 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.getExchangeCtrl = exports.getBasicDetailCtrl = void 0;
 const detail_service_1 = require("../services/detail.service");
 /**
- * 요청에서 사용자 ID를 추출하는 헬퍼 함수
+ * 요청에서 사용자 ID를 확인하는 헬퍼 함수
+ * @returns 사용자 ID 또는 undefined(인증되지 않은 경우)
  */
-function getUserId(req, res) {
-    if (!req.user) {
-        res.status(401).json({
-            success: false,
-            message: "인증이 필요합니다.",
-        });
-        return null;
-    }
-    return req.user.id;
+function getUserId(req) {
+    return req.user?.id;
 }
 /**
- * 마켓플레이스 기본 상세 정보 조회 (SSR용)
+ * 마켓플레이스 기본 상세 정보 조회
  * GET /api/market/:id/detail
  */
 const getBasicDetailCtrl = async (req, res, next) => {
     try {
         const { id } = req.params;
-        const userId = getUserId(req, res);
-        if (!userId)
+        const userId = getUserId(req);
+        // 인증되지 않은 경우 401 응답
+        if (!userId) {
+            res.status(401).json({
+                success: false,
+                message: "인증이 필요합니다.",
+            });
             return;
+        }
         const response = await (0, detail_service_1.getBasicDetail)(id, userId);
         res.json({
             success: true,
@@ -41,15 +41,21 @@ const getBasicDetailCtrl = async (req, res, next) => {
 };
 exports.getBasicDetailCtrl = getBasicDetailCtrl;
 /**
- * 마켓플레이스 교환 제안 정보 조회 (CSR용)
+ * 마켓플레이스 교환 제안 정보 조회
  * GET /api/market/:id/exchange
  */
 const getExchangeCtrl = async (req, res, next) => {
     try {
         const { id } = req.params;
-        const userId = getUserId(req, res);
-        if (!userId)
+        const userId = getUserId(req);
+        // 인증되지 않은 경우 401 응답
+        if (!userId) {
+            res.status(401).json({
+                success: false,
+                message: "인증이 필요합니다.",
+            });
             return;
+        }
         const response = await (0, detail_service_1.getExchangeDetail)(id, userId);
         res.json({
             success: true,

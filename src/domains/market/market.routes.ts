@@ -13,7 +13,6 @@ import { authenticate } from "../../middlewares/auth.middleware";
 
 const router = Router();
 
-// 마켓 리스트 관련 라우트
 router.get(
   "/",
   validateAll({ query: MarketListQuerySchema }),

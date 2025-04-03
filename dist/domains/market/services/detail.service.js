@@ -137,12 +137,12 @@ const getExchangeDetail = async (id, userId) => {
     }
     // 사용자가 판매자인지 여부 확인
     const isMine = saleCard.sellerId === userId;
-    // 응답 기본 구조
+    // 응답 기본 구조 - null 대신 빈 배열로 초기화
     const response = {
         id: saleCard.id,
         isMine,
-        receivedOffers: null,
-        myOffers: null,
+        receivedOffers: [],
+        myOffers: [],
     };
     // 내 카드인 경우: 받은 교환 제안 조회
     if (isMine) {
@@ -157,9 +157,6 @@ const getExchangeDetail = async (id, userId) => {
             const offersWithDetails = await Promise.all(exchangeOffers.map((offer) => getOfferDetails(offer, userId)));
             response.receivedOffers = offersWithDetails;
         }
-        else {
-            response.receivedOffers = [];
-        }
     }
     else {
         // 다른 사람의 카드인 경우: 내가 보낸 교환 제안 조회
@@ -173,9 +170,6 @@ const getExchangeDetail = async (id, userId) => {
         if (myOffers.length > 0) {
             const myOffersWithDetails = await Promise.all(myOffers.map((offer) => getOfferDetails(offer, userId)));
             response.myOffers = myOffersWithDetails;
-        }
-        else {
-            response.myOffers = [];
         }
     }
     return response;

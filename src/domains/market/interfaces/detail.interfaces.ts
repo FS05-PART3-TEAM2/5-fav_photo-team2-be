@@ -18,7 +18,7 @@ export interface ExchangeDetail {
   description: string;
 }
 
-// SSR용 기본 상세 정보 인터페이스
+// 기본 상세 정보 인터페이스
 export interface BasicDetail {
   id: string;
   userNickname: string;
@@ -36,7 +36,7 @@ export interface BasicDetail {
   exchangeDetail: ExchangeDetail;
 }
 
-// CSR용 교환 제안 정보 인터페이스
+// 교환 제안 정보 인터페이스
 export interface ExchangeInfo {
   id: string;
   isMine: boolean;
