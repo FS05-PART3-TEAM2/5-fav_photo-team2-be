@@ -41,6 +41,19 @@ export const signupService = async (
     data: { email, password: hashedPassword, nickname, role: "USER" },
   });
 
+  // 포인트 정보 생성
+  const point = await prisma.point.create({
+    data: { userId: user.id, points: 1000 },
+  });
+  await prisma.pointHistory.create({
+    data: {
+      pointId: point.id,
+      amount: 1000,
+      resourceType: "SIGNUP",
+      resourceId: "SIGNUP",
+    },
+  });
+
   return {
     status: 201,
     body: { message: "회원가입 성공", userId: user.id },

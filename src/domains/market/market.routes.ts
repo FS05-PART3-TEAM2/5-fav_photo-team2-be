@@ -7,6 +7,7 @@ import {
   MarketListCountQuerySchema,
   MarketListQuerySchema,
   MarketMeQuerySchema,
+  RequestMarketItemSchema,
 } from "./validators/market.validator";
 import { declineOfferController } from "./controllers/exchange.controller";
 import { authenticate } from "../../middlewares/auth.middleware";
@@ -34,6 +35,12 @@ router.get(
   authenticate,
   validateAll({ query: MarketMeQuerySchema }),
   requestHandler(marketController.getMarketMeCount)
+);
+router.post(
+  "/",
+  authenticate,
+  validateAll({ body: RequestMarketItemSchema }),
+  requestHandler(marketController.createMarketItem)
 );
 
 router.get("/:id", authenticate, marketDetailController.getMarketItemDetail);
