@@ -11,7 +11,7 @@ import {
 // 에러 메시지 정의
 const ERROR_MESSAGES = {
   grade: `유효하지 않은 등급입니다. 'ALL', 'COMMON', 'RARE', 'SUPER_RARE', 'LEGENDARY' 중 하나여야 합니다.`,
-  genre: `유효하지 않은 장르입니다. '전체', 'TRAVEL', 'LANDSCAPE', 'PORTRAIT', 'OBJECT' 중 하나여야 합니다.`,
+  genre: `유효하지 않은 장르입니다. 'ALL', 'TRAVEL', 'LANDSCAPE', 'PORTRAIT', 'OBJECT' 중 하나여야 합니다.`,
   device: `유효하지 않은 디바이스 타입입니다. 'PC', 'TABLET', 'MOBILE' 중 하나여야 합니다.`,
   limit: {
     min: "페이지 크기는 1 이상이어야 합니다.",
@@ -58,11 +58,11 @@ export const PhotocardsQuerySchema = z.object({
     .optional()
     .default("ALL"),
   genre: z
-    .enum(["전체", ...PHOTOCARD_GENRES], {
+    .enum(["ALL", ...PHOTOCARD_GENRES], {
       errorMap: () => ({ message: ERROR_MESSAGES.genre }),
     })
     .optional()
-    .default("전체"),
+    .default("ALL"),
   device: z
     .enum(["PC", "TABLET", "MOBILE"], {
       errorMap: () => ({ message: ERROR_MESSAGES.device }),

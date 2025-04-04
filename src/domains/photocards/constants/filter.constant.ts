@@ -6,7 +6,7 @@ export const PHOTOCARD_FILTER_CONFIG = {
     grade: {
       label: "등급",
       options: {
-        default: "전체",
+        default: "ALL",
         COMMON: "COMMON",
         RARE: "RARE",
         SUPER_RARE: "SUPER RARE",
@@ -16,7 +16,7 @@ export const PHOTOCARD_FILTER_CONFIG = {
     genre: {
       label: "장르",
       options: {
-        default: "전체",
+        default: "ALL",
         TRAVEL: "여행",
         LANDSCAPE: "풍경",
         PORTRAIT: "인물",

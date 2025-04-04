@@ -140,7 +140,7 @@ const getMyPhotocards: GetMyPhotocards = async (
   }
 
   // 장르 필터 추가
-  if (genre && genre !== "전체" && PHOTOCARD_GENRES.includes(genre)) {
+  if (genre && genre !== "ALL" && PHOTOCARD_GENRES.includes(genre)) {
     photoCardWhereClause.genre = genre;
   }
 
