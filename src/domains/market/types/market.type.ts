@@ -1,9 +1,16 @@
 import { z } from "zod";
 import {
+  MarketListCountQuerySchema,
   MarketListQuerySchema,
   MarketMeQuerySchema,
+  RequestMarketItemSchema,
 } from "../validators/market.validator";
 import { ExchangeOffer, SaleCard } from "@prisma/client";
+
+export type MarketListQuery = z.infer<typeof MarketListQuerySchema>;
+export type MarketListCountQuery = z.infer<typeof MarketListCountQuerySchema>;
+export type MarketMeQuery = z.infer<typeof MarketMeQuerySchema>;
+export type MarketItemRequest = z.infer<typeof RequestMarketItemSchema>;
 
 export type GetMarketList = (
   queries: MarketListQuery
@@ -12,13 +19,33 @@ export type GetMarketMeList = (
   queires: MarketMeQuery,
   user: { id: string; role: string }
 ) => Promise<MarketMeListResponse>;
+export type GetMarketListCount = (
+  queries: MarketListCountQuery
+) => Promise<MarketListCountResponse>;
+export type GetMarketMeCount = (
+  queries: MarketListCountQuery,
+  userId: string
+) => Promise<MarketListCountResponse>;
+export type CreateMarketItem = (
+  body: MarketItemRequest,
+  userId: string
+) => Promise<MarketItemResponse>;
 
-export type MarketListQuery = z.infer<typeof MarketListQuerySchema>;
-export type MarketMeQuery = z.infer<typeof MarketMeQuerySchema>;
+export interface MarketListCountResponse {
+  grade: string;
+  genre: string;
+  status: string;
+  count: number;
+}
 
 export interface PhotoCardInfo {
   name: string;
   count: number;
+}
+export interface FilterPhotoCard {
+  grade: PhotoCardInfo[] | null;
+  genre: PhotoCardInfo[] | null;
+  status: PhotoCardInfo[] | null;
 }
 
 export interface MarketListResponse {
@@ -28,6 +55,7 @@ export interface MarketListResponse {
     createdAt: string;
   } | null;
   list: MarketResponse[];
+  info: FilterPhotoCard;
 }
 export interface MarketMeListResponse {
   hasMore: boolean;
@@ -36,7 +64,7 @@ export interface MarketMeListResponse {
     createdAt: string;
   } | null;
   list: MarketMeResponse[];
-  photoCardInfo: PhotoCardInfo[];
+  info: FilterPhotoCard;
 }
 
 export interface MarketResponse {
@@ -124,4 +152,28 @@ export type MarketMyCardDto = {
   exchangeOfferId: string | null;
   saleCard: SaleCard | null;
   exchangeOffer: ExchangeOffer | null;
+};
+
+export type MarketItemResponse = {
+  saleCardId: string;
+  userPhotoCardId: string;
+  status: string;
+  name: string;
+  genre: string;
+  grade: string;
+  price: number;
+  image: string;
+  remaining: number;
+  total: number;
+  createdAt: string;
+  updatedAt: string;
+  owner: {
+    id: string;
+    nickname: string;
+  };
+  exchangeOffer: {
+    description: string;
+    grade: string;
+    genre: string;
+  };
 };
