@@ -8,7 +8,6 @@ import { userPhotoCards } from "./userPhotoCard.seed";
 import { saleCards } from "./saleCard.seed";
 import { exchangeOffers } from "./exchangeOffers.seed";
 import { notifications } from "./notifications.seed";
-import { pointHistories } from "./pointHistory.seed";
 import { randomBoxDraws } from "./randombox.seed";
 
 const prisma = new PrismaClient();
@@ -16,15 +15,14 @@ const prisma = new PrismaClient();
 async function main() {
   console.log("Start seeding...");
 
-  await prisma.exchangeOffer.deleteMany();
-  await prisma.saleCard.deleteMany();
-  await prisma.userPhotoCard.deleteMany();
-  await prisma.photoCard.deleteMany();
-  await prisma.marketOffer.deleteMany();
-  await prisma.notification.deleteMany();
-  await prisma.pointHistory.deleteMany();
-  await prisma.randomBoxDraw.deleteMany();
-  await prisma.user.deleteMany();
+  // await prisma.exchangeOffer.deleteMany();
+  // await prisma.saleCard.deleteMany();
+  // await prisma.userPhotoCard.deleteMany();
+  // await prisma.photoCard.deleteMany();
+  // await prisma.marketOffer.deleteMany();
+  // await prisma.notification.deleteMany();
+  // await prisma.randomBoxDraw.deleteMany();
+  // await prisma.user.deleteMany();
 
   // 0. user
   await prisma.user.createMany({
@@ -80,13 +78,6 @@ async function main() {
   console.log("> Creating Notifications...");
   await prisma.notification.createMany({
     data: notifications,
-    skipDuplicates: true,
-  });
-
-  // 6. PointHistory
-  console.log("> Creating PointHistories...");
-  await prisma.pointHistory.createMany({
-    data: pointHistories,
     skipDuplicates: true,
   });
 
