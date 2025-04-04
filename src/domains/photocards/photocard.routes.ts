@@ -1,5 +1,8 @@
 import { Router } from "express";
-import photocardController from "./controllers/photocard.controller";
+import photocardController, {
+  getMyPhotocards,
+  getFilterConfig,
+} from "./controllers/photocard.controller";
 import { requestHandler } from "../../utils/requestHandler";
 import { validateAll } from "../../middlewares/validator.middleware";
 import { PhotocardsQuerySchema } from "./validators/photocard.validator";
@@ -11,7 +14,9 @@ router.get(
   "/me",
   authenticate,
   validateAll({ query: PhotocardsQuerySchema }),
-  requestHandler(photocardController.getMyPhotocards)
+  requestHandler(getMyPhotocards)
 );
+
+router.get("/filters", requestHandler(getFilterConfig));
 
 export default router;

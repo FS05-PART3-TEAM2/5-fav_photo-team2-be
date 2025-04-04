@@ -1,22 +1,21 @@
 import { z } from "zod";
 import { PhotocardsQuerySchema } from "../validators/photocard.validator";
 
-export type GetMyPhotocards = (
-  userId: string,
-  queries: MyPhotocardsQuery
-) => Promise<MyPhotocardsResponse>;
-
-export type MyPhotocardsQuery = z.infer<typeof PhotocardsQuerySchema>;
-
-export interface MyPhotocardsResponse {
-  success: boolean;
+/**
+ * 사용자의 포토카드 조회 응답 인터페이스
+ */
+export interface MyPhotocards {
   userNickname: string;
   gradeCounts: GradeCounts;
-  data: PhotocardResponse[];
-  nextCursor: CursorType | null;
+  data: PhotocardInfo[];
+  nextCursor: Cursor | null;
   hasMore: boolean;
+  filterInfo?: FilterPhotoCard; // 필터링 정보 추가
 }
 
+/**
+ * 포토카드 등급별 개수 인터페이스
+ */
 export interface GradeCounts {
   COMMON: number;
   RARE: number;
@@ -24,12 +23,18 @@ export interface GradeCounts {
   LEGENDARY: number;
 }
 
-export interface CursorType {
+/**
+ * 커서 기반 페이지네이션을 위한 인터페이스
+ */
+export interface Cursor {
   id: string;
   createdAt: string;
 }
 
-export interface PhotocardResponse {
+/**
+ * 포토카드 상세 정보 인터페이스
+ */
+export interface PhotocardInfo {
   id: string;
   name: string;
   imageUrl: string;
@@ -41,6 +46,31 @@ export interface PhotocardResponse {
   createdAt: string;
   creatorNickname: string;
 }
+
+/**
+ * 필터링 정보 인터페이스
+ */
+export interface PhotoCardInfo {
+  name: string;
+  count: number;
+}
+
+export interface FilterPhotoCard {
+  grade: PhotoCardInfo[] | null;
+  genre: PhotoCardInfo[] | null;
+}
+
+export type GetMyPhotocards = (
+  userId: string,
+  queries: MyPhotocardsQuery
+) => Promise<MyPhotocards>;
+
+export type MyPhotocardsQuery = z.infer<typeof PhotocardsQuerySchema>;
+
+// 이전 버전과의 호환성을 위한 타입 별칭 정의
+export type MyPhotocardsResponse = MyPhotocards;
+export type CursorType = Cursor;
+export type PhotocardResponse = PhotocardInfo;
 
 export type PhotocardDto = {
   id: string;

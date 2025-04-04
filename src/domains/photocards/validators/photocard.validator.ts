@@ -1,16 +1,20 @@
 import { z } from "zod";
+import {
+  PHOTOCARD_GENRES,
+  PHOTOCARD_GRADES,
+} from "../constants/filter.constant";
 
 export const PhotocardsQuerySchema = z.object({
   keyword: z.string().optional(),
   grade: z
-    .enum(["ALL", "COMMON", "RARE", "SUPER_RARE", "LEGENDARY"])
+    .enum(["ALL", ...PHOTOCARD_GRADES])
     .optional()
     .default("ALL"),
   genre: z
-    .enum(["전체", "Nature", "Animal", "Portrait", "Cityscape", "Abstract"])
+    .enum(["전체", ...PHOTOCARD_GENRES])
     .optional()
     .default("전체"),
-  sort: z.enum(["desc", "asc"]).optional().default("desc"),
+  sort: z.enum(["desc", "asc", "latest", "oldest"]).optional().default("desc"),
   limit: z
     .string()
     .optional()
