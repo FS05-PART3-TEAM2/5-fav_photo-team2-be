@@ -38,10 +38,10 @@ export interface BasicDetail {
 
 // 교환 제안 정보 인터페이스
 export interface ExchangeInfo {
-  id: string;
+  saleId: string;
   isMine: boolean;
-  receivedOffers: Offer[];
-  myOffers: Offer[];
+  receivedOffers: Offer[] | null;
+  myOffers: Offer[] | null;
 }
 
 // 마켓 전체 상세 응답 인터페이스 (기본 정보 + 교환 제안 정보)

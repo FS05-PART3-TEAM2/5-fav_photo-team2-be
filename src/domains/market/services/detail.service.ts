@@ -196,10 +196,10 @@ export const getExchangeDetail = async (
 
   // 응답 기본 구조
   const response: ExchangeInfo = {
-    id: saleCard.id,
+    saleId: saleCard.id,
     isMine,
-    receivedOffers: [],
-    myOffers: [],
+    receivedOffers: isMine ? [] : null,
+    myOffers: isMine ? null : [],
   };
 
   // 내 카드인 경우: 받은 교환 제안 조회
@@ -217,8 +217,6 @@ export const getExchangeDetail = async (
         exchangeOffers.map((offer) => getOfferDetails(offer, userId))
       );
       response.receivedOffers = offersWithDetails;
-    } else {
-      response.receivedOffers = [];
     }
   } else {
     // 다른 사람의 카드인 경우: 내가 보낸 교환 제안 조회
@@ -235,8 +233,6 @@ export const getExchangeDetail = async (
         myOffers.map((offer) => getOfferDetails(offer, userId))
       );
       response.myOffers = myOffersWithDetails;
-    } else {
-      response.myOffers = [];
     }
   }
 
