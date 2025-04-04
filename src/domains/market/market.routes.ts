@@ -1,6 +1,9 @@
 import { Router } from "express";
 import marketController from "./controllers/market.controller";
-import marketDetailController from "./controllers/detail.controller";
+import marketDetailController, {
+  getBasicDetailCtrl,
+  getExchangeCtrl,
+} from "./controllers/detail.controller";
 import { requestHandler } from "../../utils/requestHandler";
 import { validateAll } from "../../middlewares/validator.middleware";
 import {
@@ -43,7 +46,9 @@ router.post(
   requestHandler(marketController.createMarketItem)
 );
 
-router.get("/:id", authenticate, marketDetailController.getMarketItemDetail);
+router.get("/:id/detail", authenticate, requestHandler(getBasicDetailCtrl));
+
+router.get("/:id/exchange", authenticate, requestHandler(getExchangeCtrl));
 
 // Exchange routes
 router.patch("/exchange/:id/decline", authenticate, declineOfferController);
