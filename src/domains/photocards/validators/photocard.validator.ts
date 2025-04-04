@@ -3,16 +3,11 @@ import {
   PHOTOCARD_GENRES,
   PHOTOCARD_GRADES,
 } from "../constants/filter.constant";
-import {
-  DeviceType,
-  getPageSizeByDevice,
-} from "../constants/pagination.constant";
 
 // 에러 메시지 정의
 const ERROR_MESSAGES = {
   grade: `유효하지 않은 등급입니다. 'ALL', 'COMMON', 'RARE', 'SUPER_RARE', 'LEGENDARY' 중 하나여야 합니다.`,
   genre: `유효하지 않은 장르입니다. 'ALL', 'TRAVEL', 'LANDSCAPE', 'PORTRAIT', 'OBJECT' 중 하나여야 합니다.`,
-  device: `유효하지 않은 디바이스 타입입니다. 'PC', 'TABLET', 'MOBILE' 중 하나여야 합니다.`,
   limit: {
     min: "페이지 크기는 1 이상이어야 합니다.",
     max: "페이지 크기는 50 이하여야 합니다.",
@@ -37,17 +32,6 @@ const transformCursor = (val: any) => {
   return val;
 };
 
-// 디바이스에 따른 페이지 크기 조정 함수
-const adjustLimitByDevice = (data: any) => {
-  if (data.device && (!data.limit || data.limit === 15)) {
-    return {
-      ...data,
-      limit: getPageSizeByDevice(data.device as DeviceType),
-    };
-  }
-  return data;
-};
-
 // 검증용 기본 스키마 (라우터에서 사용)
 export const PhotocardsQuerySchema = z.object({
   keyword: z.string().optional(),
@@ -55,17 +39,10 @@ export const PhotocardsQuerySchema = z.object({
     .enum(["ALL", ...PHOTOCARD_GRADES], {
       errorMap: () => ({ message: ERROR_MESSAGES.grade }),
     })
-    .optional()
-    .default("ALL"),
+    .optional(),
   genre: z
     .enum(["ALL", ...PHOTOCARD_GENRES], {
       errorMap: () => ({ message: ERROR_MESSAGES.genre }),
-    })
-    .optional()
-    .default("ALL"),
-  device: z
-    .enum(["PC", "TABLET", "MOBILE"], {
-      errorMap: () => ({ message: ERROR_MESSAGES.device }),
     })
     .optional(),
   limit: z
@@ -86,5 +63,4 @@ export const PhotocardsQuerySchema = z.object({
 });
 
 // 변환 로직이 포함된 전체 스키마 (서비스에서 사용)
-export const PhotocardsQueryWithTransform =
-  PhotocardsQuerySchema.transform(adjustLimitByDevice);
+export const PhotocardsQueryWithTransform = PhotocardsQuerySchema;

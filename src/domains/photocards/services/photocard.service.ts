@@ -1,33 +1,30 @@
-import { PrismaClient, Prisma } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 import {
-  GetMyPhotocards,
   MyPhotocardsQuery,
   MyPhotocards,
-  PhotocardInfo,
   GradeCounts,
-  Cursor,
+  PhotocardInfo,
   FilterPhotoCard,
+  Cursor,
 } from "../types/photocard.type";
-import {
-  PHOTOCARD_GRADES,
-  PHOTOCARD_GENRES,
-} from "../constants/filter.constant";
+import { PHOTOCARD_GENRES } from "../constants/filter.constant";
 
 const prisma = new PrismaClient();
 
 /**
- * 사용자의 포토카드 목록을 조회하는 함수
+ * 사용자 포토카드 목록 조회
+ * @param userId 사용자 ID
+ * @param queries 쿼리 파라미터
  */
-const getMyPhotocards: GetMyPhotocards = async (
+const getMyPhotocards = async (
   userId: string,
   queries: MyPhotocardsQuery
 ): Promise<MyPhotocards> => {
-  const { keyword, grade, genre, limit, cursor } = queries;
+  const { keyword, grade, genre, limit = 15, cursor } = queries;
 
   // 사용자 정보 조회
   const currentUser = await prisma.user.findUnique({
     where: { id: userId },
-    select: { nickname: true },
   });
 
   if (!currentUser) {
@@ -40,109 +37,72 @@ const getMyPhotocards: GetMyPhotocards = async (
   // 필터링 정보 조회
   const filterInfo = await getFilterInfo(userId);
 
-  // 커서 처리: 전달된 cursor가 없거나 id만 있고 createdAt이 없는 경우를 처리
-  let cursorCondition = {};
+  // 커서 설정
+  let nextCursor: Cursor | null = null;
+  let hasMore = false;
 
-  if (cursor && cursor.id) {
-    if (cursor.createdAt) {
-      // createdAt이 이미 있는 경우 - 기존 방식대로 처리
-      cursorCondition = {
-        OR: [
-          { createdAt: { lt: new Date(cursor.createdAt) } },
-          {
-            createdAt: { equals: new Date(cursor.createdAt) },
-            id: { lt: cursor.id },
-          },
-        ],
-      };
-    } else {
-      // createdAt이 없고 id만 있는 경우 - id 기준으로만 처리
-      try {
-        const userPhotoCard = await prisma.userPhotoCard.findUnique({
-          where: { id: cursor.id },
-          select: { createdAt: true },
-        });
+  if (cursor) {
+    nextCursor = {
+      id: cursor.id,
+    };
+  }
 
-        if (userPhotoCard) {
-          cursorCondition = {
-            OR: [
-              { createdAt: { lt: userPhotoCard.createdAt } },
-              {
-                createdAt: { equals: userPhotoCard.createdAt },
-                id: { lt: cursor.id },
-              },
-            ],
-          };
-        } else {
-          // ID에 해당하는 항목을 찾지 못한 경우, 기본값으로 처리
-          cursorCondition = { id: { lt: cursor.id } };
-        }
-      } catch (error) {
-        console.error("커서 처리 중 오류 발생:", error);
-        // 오류 발생 시 ID만으로 필터링
-        cursorCondition = { id: { lt: cursor.id } };
-      }
+  // 사용자의 포토카드 목록 조회 (커서 기준 페이지네이션)
+  const userPhotoCardsQuery: any = {
+    where: {
+      ownerId: userId,
+    },
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    take: limit + 1,
+  };
+
+  if (nextCursor) {
+    userPhotoCardsQuery.cursor = {
+      id: nextCursor.id,
+    };
+    userPhotoCardsQuery.skip = 1;
+
+    // createdAt이 있으면 OR 조건으로 커서 설정
+    if (nextCursor.createdAt) {
+      userPhotoCardsQuery.where.OR = [
+        { createdAt: { lt: new Date(nextCursor.createdAt) } },
+        {
+          createdAt: { equals: new Date(nextCursor.createdAt) },
+          id: { lt: nextCursor.id },
+        },
+      ];
+      delete userPhotoCardsQuery.cursor;
+      delete userPhotoCardsQuery.skip;
     }
   }
 
-  // 포토카드 목록 조회
-  const userPhotoCards = await prisma.userPhotoCard.findMany({
-    where: {
-      ownerId: userId,
-      ...cursorCondition,
-    },
-    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-    take: limit,
-  });
+  const userPhotoCards = await prisma.userPhotoCard.findMany(
+    userPhotoCardsQuery
+  );
 
-  // 다음 페이지 커서 생성
-  const hasMore = userPhotoCards.length === limit;
-  const nextCursor: Cursor | null =
-    hasMore && userPhotoCards.length > 0
-      ? {
-          id: userPhotoCards[userPhotoCards.length - 1].id,
-          createdAt:
-            userPhotoCards[userPhotoCards.length - 1].createdAt.toISOString(),
-        }
-      : null;
-
-  // 결과가 없을 경우 빈 응답 반환
-  if (userPhotoCards.length === 0) {
-    return {
-      userNickname: currentUser.nickname,
-      gradeCounts,
-      list: null,
-      nextCursor: null,
-      hasMore: false,
-      filterInfo,
+  // 다음 페이지 존재 여부 확인
+  if (userPhotoCards.length > limit) {
+    hasMore = true;
+    userPhotoCards.pop(); // 마지막 항목 제거
+    const lastItem = userPhotoCards[userPhotoCards.length - 1];
+    nextCursor = {
+      id: lastItem.id,
+      createdAt: lastItem.createdAt.toISOString(),
     };
+  } else {
+    nextCursor = null;
   }
 
   // 포토카드 ID 목록
   const photoCardIds = userPhotoCards.map((card) => card.photoCardId);
 
   // 필터링 조건 구성
-  const photoCardWhereClause: any = {
-    id: { in: photoCardIds },
-  };
-
-  // 검색 조건 추가
-  if (keyword) {
-    photoCardWhereClause.OR = [
-      { name: { contains: keyword, mode: "insensitive" } },
-      { description: { contains: keyword, mode: "insensitive" } },
-    ];
-  }
-
-  // 등급 필터 추가
-  if (grade && grade !== "ALL") {
-    photoCardWhereClause.grade = grade;
-  }
-
-  // 장르 필터 추가
-  if (genre && genre !== "ALL" && PHOTOCARD_GENRES.includes(genre)) {
-    photoCardWhereClause.genre = genre;
-  }
+  const photoCardWhereClause = await buildWhereClause({
+    photoCardIds,
+    keyword,
+    grade,
+    genre,
+  });
 
   // 포토카드 정보 조회
   const photoCards = await prisma.photoCard.findMany({
@@ -196,6 +156,89 @@ const getMyPhotocards: GetMyPhotocards = async (
     hasMore,
     filterInfo,
   };
+};
+
+/**
+ * 필터링 조건을 구성하는 함수
+ */
+const buildWhereClause = async ({
+  photoCardIds,
+  keyword,
+  grade,
+  genre,
+}: {
+  photoCardIds: string[];
+  keyword?: string;
+  grade?: string;
+  genre?: string;
+}) => {
+  // 필터링 조건 구성
+  const photoCardWhereClause: any = {
+    id: { in: photoCardIds },
+  };
+
+  // 검색 조건 추가
+  if (keyword) {
+    photoCardWhereClause.OR = [
+      { name: { contains: keyword, mode: "insensitive" } },
+      { description: { contains: keyword, mode: "insensitive" } },
+    ];
+  }
+
+  // 등급 필터 추가 - 값이 제공되고 "ALL"이 아닌 경우에만 필터링
+  if (grade && grade !== "ALL") {
+    photoCardWhereClause.grade = grade;
+  }
+
+  // 장르 필터 추가 - 값이 제공되고 "ALL"이 아닌 경우에만 필터링
+  if (genre && genre !== "ALL" && PHOTOCARD_GENRES.includes(genre)) {
+    photoCardWhereClause.genre = genre;
+  }
+
+  return photoCardWhereClause;
+};
+
+/**
+ * 필터 옵션에 따른 포토카드 개수 조회
+ */
+const getMyPhotocardsCount = async (
+  userId: string,
+  filters: { grade?: string; genre?: string }
+): Promise<number> => {
+  // 사용자 존재 여부 확인
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!user) {
+    throw new Error("사용자를 찾을 수 없습니다.");
+  }
+
+  // 사용자의 포토카드 목록 조회
+  const userPhotoCards = await prisma.userPhotoCard.findMany({
+    where: { ownerId: userId },
+  });
+
+  if (userPhotoCards.length === 0) {
+    return 0;
+  }
+
+  // 포토카드 ID 목록
+  const photoCardIds = userPhotoCards.map((card) => card.photoCardId);
+
+  // 필터링 조건 구성
+  const photoCardWhereClause = await buildWhereClause({
+    photoCardIds,
+    grade: filters.grade,
+    genre: filters.genre,
+  });
+
+  // 포토카드 개수 조회
+  const count = await prisma.photoCard.count({
+    where: photoCardWhereClause,
+  });
+
+  return count;
 };
 
 /**
@@ -280,6 +323,7 @@ const photocardService = {
   getMyPhotocards,
   getGradeCounts,
   getFilterInfo,
+  getMyPhotocardsCount,
 };
 
 export default photocardService;
