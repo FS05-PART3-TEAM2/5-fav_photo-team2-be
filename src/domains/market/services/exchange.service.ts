@@ -49,6 +49,7 @@ export const declineOffer = async (
  * seller : 판매 카드 소유자
  * offerer : 교환 제안자 (카드 미소유)
  * seller -> offerer : 판매 카드 제공
+ * offerer -> seller : 교환 제안 카드 제공
  */
 export const acceptOffer = async (
   id: string,
@@ -85,6 +86,17 @@ export const acceptOffer = async (
     }
     if (saleCard.status !== "ON_SALE") {
       throw new CustomError("판매 카드가 ON_SALE 상태가 아닙니다.", 400);
+    }
+
+    // 3. 교환 제안 카드 조회 (offerer가 제안한 카드)
+    const offererCard = await tx.userPhotoCard.findUnique({
+      where: { id: exchangeOffer.userPhotoCardId },
+    });
+    if (!offererCard) {
+      throw new CustomError("교환 제안 카드를 찾을 수 없습니다.", 404);
+    }
+    if (offererCard.quantity < 1) {
+      throw new CustomError("교환 제안 카드의 수량이 부족합니다.", 400);
     }
 
     // 4. 판매 대상 카드를 seller의 인벤토리에서 차감
@@ -145,7 +157,55 @@ export const acceptOffer = async (
       });
     }
 
-    // 6. saleCard 수량 차감, 수량이 0이면 SOLD_OUT 상태로 변경
+    // 6. offerer가 제안한 카드를 offerer의 인벤토리에서 차감
+    // offerer의 제안 카드에 락 설정
+    const offererCardSQL = `
+      SELECT * FROM "UserPhotoCard" 
+      WHERE "id" = '${exchangeOffer.userPhotoCardId}' 
+      FOR UPDATE
+    `;
+    await tx.$executeRaw(Prisma.raw(offererCardSQL));
+
+    await tx.userPhotoCard.update({
+      where: { id: exchangeOffer.userPhotoCardId },
+      data: { quantity: offererCard.quantity - 1 },
+    });
+
+    // 7. offerer가 제안한 카드를 seller 인벤토리에 추가
+    // seller의 제안 카드 락 설정
+    const sellerOfferCardSQL = `
+      SELECT * FROM "UserPhotoCard" 
+      WHERE "ownerId" = '${saleCard.sellerId}' 
+      AND "photoCardId" = '${offererCard.photoCardId}'
+      FOR UPDATE
+    `;
+    await tx.$executeRaw(Prisma.raw(sellerOfferCardSQL));
+
+    const sellerOfferCard = await tx.userPhotoCard.findFirst({
+      where: {
+        ownerId: saleCard.sellerId,
+        photoCardId: offererCard.photoCardId,
+      },
+    });
+
+    // 이미 동일한 포토카드를 보유하고 있으면 수량 증가
+    if (sellerOfferCard) {
+      await tx.userPhotoCard.update({
+        where: { id: sellerOfferCard.id },
+        data: { quantity: sellerOfferCard.quantity + 1 },
+      });
+    } else {
+      // 카드가 없으면 생성
+      await tx.userPhotoCard.create({
+        data: {
+          ownerId: saleCard.sellerId,
+          photoCardId: offererCard.photoCardId,
+          quantity: 1,
+        },
+      });
+    }
+
+    // 8. saleCard 수량 차감, 수량이 0이면 SOLD_OUT 상태로 변경
     // saleCard에 락 설정
     await tx.$executeRaw`SELECT * FROM "SaleCard" WHERE id = ${saleCard.id} FOR UPDATE`;
 
@@ -157,7 +217,7 @@ export const acceptOffer = async (
       },
     });
 
-    // 7. 교환제안 상태 업데이트
+    // 9. 교환제안 상태 업데이트
     // 교환제안에도 락 설정
     await tx.$executeRaw`SELECT * FROM "ExchangeOffer" WHERE id = ${id} FOR UPDATE`;
 
@@ -166,7 +226,7 @@ export const acceptOffer = async (
       data: { status: "ACCEPTED" },
     });
 
-    // 8. 거래 내역 기록
+    // 10. 거래 내역 기록
     await tx.transactionLog.create({
       data: {
         transactionType: "EXCHANGE",
@@ -178,7 +238,7 @@ export const acceptOffer = async (
       },
     });
 
-    // 9. 알림 생성
+    // 11. 알림 생성
     await createNotification({
       userId: saleCard.sellerId,
       message: "교환 제안이 승인되었습니다.",
