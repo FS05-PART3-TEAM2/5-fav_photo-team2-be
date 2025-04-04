@@ -1,17 +1,18 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Prisma } from "@prisma/client";
 import { ExchangeOffer } from "../interfaces/exchange.interface";
+import { CustomError } from "../../../utils/errors";
+import { createNotification } from "../../notification/services/notificationService";
 
 const prisma = new PrismaClient();
 
 /**
  * 교환제안 취소/거절
  * @param id 교환제안 ID
- * @returns 취소/거절된 교환제안
  */
 export const declineOffer = async (id: string): Promise<ExchangeOffer> => {
   const result = await prisma.exchangeOffer.update({
     where: { id },
-    data: { status: "DECLINED" },
+    data: { status: "FAILED" },
   });
   return result as unknown as ExchangeOffer;
 };
@@ -20,22 +21,20 @@ export const declineOffer = async (id: string): Promise<ExchangeOffer> => {
  * 교환제안 승인
  *
  * @param id 교환제안 ID
- * @returns 승인된 교환제안
  *
  * seller : 판매 카드 소유자
- * offerer : 교환 제안자
+ * offerer : 교환 제안자 (카드 미소유)
  * seller -> offerer : 판매 카드 제공
- * offerer -> seller : 교환 카드 제공
  */
 export const acceptOffer = async (id: string): Promise<ExchangeOffer> => {
   return prisma.$transaction(async (tx) => {
     // 1. 교환제안 조회
     const exchangeOffer = await tx.exchangeOffer.findUnique({ where: { id } });
     if (!exchangeOffer) {
-      throw new Error("교환제안을 찾을 수 없습니다.");
+      throw new CustomError("교환제안을 찾을 수 없습니다.", 404);
     }
     if (exchangeOffer.status !== "PENDING") {
-      throw new Error("교환제안이 PENDING 상태가 아닙니다.");
+      throw new CustomError("교환제안이 PENDING 상태가 아닙니다.", 400);
     }
 
     // 2. 해당 saleCard 조회
@@ -43,54 +42,22 @@ export const acceptOffer = async (id: string): Promise<ExchangeOffer> => {
       where: { id: exchangeOffer.saleCardId },
     });
     if (!saleCard) {
-      throw new Error("판매 카드를 찾을 수 없습니다.");
+      throw new CustomError("판매 카드를 찾을 수 없습니다.", 404);
     }
     if (saleCard.status !== "ON_SALE") {
-      throw new Error("판매 카드가 ON_SALE 상태가 아닙니다.");
+      throw new CustomError("판매 카드가 ON_SALE 상태가 아닙니다.", 400);
     }
 
-    // 3. offerer가 제공하는 카드 인벤토리 확인
-    const offererCard = await tx.userPhotoCard.findFirst({
-      where: {
-        ownerId: exchangeOffer.offererId,
-        photoCardId: exchangeOffer.offeredCardId,
-      },
-    });
-    if (!offererCard) {
-      throw new Error("제공하는 카드가 없습니다.");
-    }
+    // 4. 판매 대상 카드를 seller의 인벤토리에서 차감
+    // seller의 판매 카드에 락 설정
+    const sellerSaleCardSQL = `
+      SELECT * FROM "UserPhotoCard" 
+      WHERE "ownerId" = '${saleCard.sellerId}' 
+      AND "photoCardId" = '${saleCard.photoCardId}'
+      FOR UPDATE
+    `;
+    await tx.$executeRaw(Prisma.raw(sellerSaleCardSQL));
 
-    // 4. offerer 인벤토리 차감
-    await tx.userPhotoCard.update({
-      where: { id: offererCard.id },
-      data: { quantity: offererCard.quantity - 1 },
-    });
-
-    // 5. seller의 인벤토리에 offerer가 제공한 카드 추가
-    const sellerOfferedCard = await tx.userPhotoCard.findFirst({
-      where: {
-        ownerId: saleCard.sellerId,
-        photoCardId: exchangeOffer.offeredCardId,
-      },
-    });
-    // 이미 동일한 포토카드를 보유하고 있으면 수량 증가
-    if (sellerOfferedCard) {
-      await tx.userPhotoCard.update({
-        where: { id: sellerOfferedCard.id },
-        data: { quantity: sellerOfferedCard.quantity + 1 },
-      });
-    } else {
-      // 카드가 없으면 생성
-      await tx.userPhotoCard.create({
-        data: {
-          ownerId: saleCard.sellerId,
-          photoCardId: exchangeOffer.offeredCardId,
-          quantity: 1,
-        },
-      });
-    }
-
-    // 6. 판매 대상 카드를 seller의 인벤토리에서 차감
     const sellerSaleCard = await tx.userPhotoCard.findFirst({
       where: {
         ownerId: saleCard.sellerId,
@@ -98,7 +65,7 @@ export const acceptOffer = async (id: string): Promise<ExchangeOffer> => {
       },
     });
     if (!sellerSaleCard) {
-      throw new Error("판매 카드가 없습니다.");
+      throw new CustomError("판매 카드가 없습니다.", 404);
     }
 
     await tx.userPhotoCard.update({
@@ -106,7 +73,16 @@ export const acceptOffer = async (id: string): Promise<ExchangeOffer> => {
       data: { quantity: sellerSaleCard.quantity - 1 },
     });
 
-    // 7. 판매 대상 카드를 offerer 인벤토리에 추가
+    // 5. 판매 대상 카드를 offerer 인벤토리에 추가
+    // offerer의 판매 카드 락 설정
+    const offererSaleCardSQL = `
+      SELECT * FROM "UserPhotoCard" 
+      WHERE "ownerId" = '${exchangeOffer.offererId}' 
+      AND "photoCardId" = '${saleCard.photoCardId}'
+      FOR UPDATE
+    `;
+    await tx.$executeRaw(Prisma.raw(offererSaleCardSQL));
+
     const offererSaleCard = await tx.userPhotoCard.findFirst({
       where: {
         ownerId: exchangeOffer.offererId,
@@ -130,7 +106,10 @@ export const acceptOffer = async (id: string): Promise<ExchangeOffer> => {
       });
     }
 
-    // 8. saleCard 수량 차감, 수량이 0이면 SOLD_OUT 상태로 변경
+    // 6. saleCard 수량 차감, 수량이 0이면 SOLD_OUT 상태로 변경
+    // saleCard에 락 설정
+    await tx.$executeRaw`SELECT * FROM "SaleCard" WHERE id = ${saleCard.id} FOR UPDATE`;
+
     await tx.saleCard.update({
       where: { id: saleCard.id },
       data: {
@@ -139,22 +118,36 @@ export const acceptOffer = async (id: string): Promise<ExchangeOffer> => {
       },
     });
 
-    // 9. 교환제안 상태 업데이트
+    // 7. 교환제안 상태 업데이트
+    // 교환제안에도 락 설정
+    await tx.$executeRaw`SELECT * FROM "ExchangeOffer" WHERE id = ${id} FOR UPDATE`;
+
     const acceptedOffer = await tx.exchangeOffer.update({
       where: { id },
       data: { status: "ACCEPTED" },
     });
 
-    // 10. 거래 내역 기록
+    // 8. 거래 내역 기록
     await tx.transactionLog.create({
       data: {
-        transactionType: "exchange",
-        transactionId: acceptedOffer.id,
+        transactionType: "EXCHANGE",
+        saleCardId: saleCard.id,
         newOwnerId: exchangeOffer.offererId,
         oldOwnerId: saleCard.sellerId,
         quantity: 1,
         totalPrice: 0,
       },
+    });
+
+    // 9. 알림 생성
+    await createNotification({
+      userId: saleCard.sellerId,
+      message: "교환 제안이 승인되었습니다.",
+    });
+
+    await createNotification({
+      userId: exchangeOffer.offererId,
+      message: "교환이 성사되었습니다.",
     });
 
     return acceptedOffer as unknown as ExchangeOffer;

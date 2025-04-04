@@ -9,7 +9,10 @@ import {
   MarketMeQuerySchema,
   RequestMarketItemSchema,
 } from "./validators/market.validator";
-import { declineOfferController } from "./controllers/exchange.controller";
+import {
+  declineOfferController,
+  acceptOfferController,
+} from "./controllers/exchange.controller";
 import { authenticate } from "../../middlewares/auth.middleware";
 
 const router = Router();
@@ -47,5 +50,6 @@ router.get("/:id", authenticate, marketDetailController.getMarketItemDetail);
 
 // Exchange routes
 router.patch("/exchange/:id/decline", authenticate, declineOfferController);
+router.patch("/exchange/:id/accept", authenticate, acceptOfferController);
 
 export default router;
