@@ -40,3 +40,16 @@ export const MarketListCountQuerySchema = z.object({
     .optional(),
   status: z.enum(["ON_SALE", "SOLD_OUT", "PENDING"]).optional(),
 });
+
+export const RequestMarketItemSchema = z.object({
+  userPhotoCardId: z.string(),
+  quantity: z.number().min(1).max(10),
+  price: z.number().min(0),
+  exchangeOffer: z
+    .object({
+      grade: z.string(),
+      genre: z.string(),
+      description: z.string(),
+    })
+    .optional(),
+});
