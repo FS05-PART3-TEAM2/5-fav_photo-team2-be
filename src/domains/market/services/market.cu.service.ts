@@ -27,7 +27,6 @@ const createMarketItem: CreateMarketItem = async (body, userId) => {
   const saleCard = await prisma.$transaction(async (tx) => {
     const saleCard = await tx.saleCard.create({
       data: {
-        remaining: quantity,
         quantity,
         price,
         status: "ON_SALE",
