@@ -144,9 +144,14 @@ async function getOfferDetails(offer: any, userId: string): Promise<Offer> {
     );
   }
 
-  // 제안된 카드의 포토카드 정보 조회
+  // 제안된 카드의 포토카드 정보 조회 (원작자 정보 포함)
   const offeredCard = await prisma.photoCard.findUnique({
     where: { id: userPhotoCard.photoCardId },
+    include: {
+      creator: {
+        select: { nickname: true },
+      },
+    },
   });
 
   // 제안자 정보 조회
@@ -160,7 +165,7 @@ async function getOfferDetails(offer: any, userId: string): Promise<Offer> {
 
   return {
     id: offer.id,
-    offererNickname: offerer.nickname,
+    creatorNickname: offeredCard.creator.nickname,
     name: offeredCard.name,
     description: offeredCard.description,
     imageUrl: offeredCard.imageUrl,

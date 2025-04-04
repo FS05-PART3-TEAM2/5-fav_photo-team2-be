@@ -1,7 +1,7 @@
 // 교환 제안 정보 인터페이스
 export interface Offer {
   id: string;
-  offererNickname: string;
+  creatorNickname: string;
   name: string;
   description: string;
   imageUrl: string;
