@@ -1,12 +1,7 @@
 /**
- * 포토카드 필터링 및 정렬 설정
+ * 포토카드 필터링 설정
  */
 export const PHOTOCARD_FILTER_CONFIG = {
-  orderBy: {
-    // 정렬 기준
-    latest: "최신 순",
-    oldest: "오래된 순",
-  },
   filter: {
     grade: {
       label: "등급",
@@ -37,7 +32,6 @@ export const PHOTOCARD_FILTER_CONFIG = {
 export const DEFAULT_FILTER_VALUES = {
   grade: "default",
   genre: "default",
-  orderBy: "latest",
 };
 
 /**

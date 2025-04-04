@@ -22,10 +22,7 @@ const getMyPhotocards: GetMyPhotocards = async (
   userId: string,
   queries: MyPhotocardsQuery
 ): Promise<MyPhotocards> => {
-  const { keyword, grade, genre, sort, limit, cursor } = queries;
-
-  // 정렬 방식 변환
-  const orderDirection = getOrderDirection(sort);
+  const { keyword, grade, genre, limit, cursor } = queries;
 
   // 사용자 정보 조회
   const currentUser = await prisma.user.findUnique({
@@ -43,74 +40,113 @@ const getMyPhotocards: GetMyPhotocards = async (
   // 필터링 정보 조회
   const filterInfo = await getFilterInfo(userId);
 
+  // 커서 처리: 전달된 cursor가 없거나 id만 있고 createdAt이 없는 경우를 처리
+  let cursorCondition = {};
+
+  if (cursor && cursor.id) {
+    if (cursor.createdAt) {
+      // createdAt이 이미 있는 경우 - 기존 방식대로 처리
+      cursorCondition = {
+        OR: [
+          { createdAt: { lt: new Date(cursor.createdAt) } },
+          {
+            createdAt: { equals: new Date(cursor.createdAt) },
+            id: { lt: cursor.id },
+          },
+        ],
+      };
+    } else {
+      // createdAt이 없고 id만 있는 경우 - id 기준으로만 처리
+      try {
+        const userPhotoCard = await prisma.userPhotoCard.findUnique({
+          where: { id: cursor.id },
+          select: { createdAt: true },
+        });
+
+        if (userPhotoCard) {
+          cursorCondition = {
+            OR: [
+              { createdAt: { lt: userPhotoCard.createdAt } },
+              {
+                createdAt: { equals: userPhotoCard.createdAt },
+                id: { lt: cursor.id },
+              },
+            ],
+          };
+        } else {
+          // ID에 해당하는 항목을 찾지 못한 경우, 기본값으로 처리
+          cursorCondition = { id: { lt: cursor.id } };
+        }
+      } catch (error) {
+        console.error("커서 처리 중 오류 발생:", error);
+        // 오류 발생 시 ID만으로 필터링
+        cursorCondition = { id: { lt: cursor.id } };
+      }
+    }
+  }
+
   // 포토카드 목록 조회
   const userPhotoCards = await prisma.userPhotoCard.findMany({
     where: {
       ownerId: userId,
-      // 복합 커서 조건 적용
-      ...(cursor
-        ? {
-            OR: [
-              { createdAt: { lt: new Date(cursor.createdAt) } },
-              {
-                createdAt: { equals: new Date(cursor.createdAt) },
-                id: { lt: cursor.id },
-              },
-            ],
-          }
-        : {}),
+      ...cursorCondition,
     },
-    orderBy: [{ createdAt: orderDirection }, { id: "desc" }],
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
     take: limit,
   });
 
   // 다음 페이지 커서 생성
   const hasMore = userPhotoCards.length === limit;
-  const nextCursor: Cursor | null = hasMore
-    ? {
-        id: userPhotoCards[userPhotoCards.length - 1].id,
-        createdAt:
-          userPhotoCards[userPhotoCards.length - 1].createdAt.toISOString(),
-      }
-    : null;
+  const nextCursor: Cursor | null =
+    hasMore && userPhotoCards.length > 0
+      ? {
+          id: userPhotoCards[userPhotoCards.length - 1].id,
+          createdAt:
+            userPhotoCards[userPhotoCards.length - 1].createdAt.toISOString(),
+        }
+      : null;
 
-  // 포토카드 ID 목록
-  const photoCardIds = userPhotoCards.map((card) => card.photoCardId);
-
-  // 결과가 없을 경우 빈 배열 반환
-  if (photoCardIds.length === 0) {
+  // 결과가 없을 경우 빈 응답 반환
+  if (userPhotoCards.length === 0) {
     return {
       userNickname: currentUser.nickname,
       gradeCounts,
-      data: [],
+      list: null,
       nextCursor: null,
       hasMore: false,
       filterInfo,
     };
   }
 
-  // 포토카드 정보 조회 및 필터링 - AND 조건으로 필터링 적용
+  // 포토카드 ID 목록
+  const photoCardIds = userPhotoCards.map((card) => card.photoCardId);
+
+  // 필터링 조건 구성
+  const photoCardWhereClause: any = {
+    id: { in: photoCardIds },
+  };
+
+  // 검색 조건 추가
+  if (keyword) {
+    photoCardWhereClause.OR = [
+      { name: { contains: keyword, mode: "insensitive" } },
+      { description: { contains: keyword, mode: "insensitive" } },
+    ];
+  }
+
+  // 등급 필터 추가
+  if (grade && grade !== "ALL") {
+    photoCardWhereClause.grade = grade;
+  }
+
+  // 장르 필터 추가
+  if (genre && genre !== "전체" && PHOTOCARD_GENRES.includes(genre)) {
+    photoCardWhereClause.genre = genre;
+  }
+
+  // 포토카드 정보 조회
   const photoCards = await prisma.photoCard.findMany({
-    where: {
-      id: { in: photoCardIds },
-      AND: [
-        // 키워드 검색
-        keyword
-          ? {
-              OR: [
-                { name: { contains: keyword, mode: "insensitive" } },
-                { description: { contains: keyword, mode: "insensitive" } },
-              ],
-            }
-          : {},
-        // 등급 필터
-        grade && grade !== "ALL" ? { grade } : {},
-        // 장르 필터 - PHOTOCARD_GENRES에 포함된 장르만 필터링
-        genre && genre !== "전체" && PHOTOCARD_GENRES.includes(genre)
-          ? { genre }
-          : {},
-      ],
-    },
+    where: photoCardWhereClause,
     include: {
       creator: {
         select: {
@@ -139,30 +175,27 @@ const getMyPhotocards: GetMyPhotocards = async (
     creatorNickname: photoCard.creator.nickname,
   }));
 
+  // 필터링 후 결과가 없는 경우
+  if (mappedPhotocards.length === 0) {
+    return {
+      userNickname: currentUser.nickname,
+      gradeCounts,
+      list: null,
+      nextCursor,
+      hasMore: false,
+      filterInfo,
+    };
+  }
+
   // 최종 응답 반환
   return {
     userNickname: currentUser.nickname,
     gradeCounts,
-    data: mappedPhotocards,
+    list: mappedPhotocards,
     nextCursor,
     hasMore,
     filterInfo,
   };
-};
-
-/**
- * 정렬 방식에 따른 정렬 방향 변환
- */
-const getOrderDirection = (sort?: string): "asc" | "desc" => {
-  switch (sort) {
-    case "oldest":
-    case "asc":
-      return "asc";
-    case "latest":
-    case "desc":
-    default:
-      return "desc";
-  }
 };
 
 /**

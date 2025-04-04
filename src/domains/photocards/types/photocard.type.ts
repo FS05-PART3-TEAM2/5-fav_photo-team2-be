@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { PhotocardsQuerySchema } from "../validators/photocard.validator";
+import { PhotocardsQueryWithTransform } from "../validators/photocard.validator";
 
 /**
  * 사용자의 포토카드 조회 응답 인터페이스
@@ -7,7 +7,7 @@ import { PhotocardsQuerySchema } from "../validators/photocard.validator";
 export interface MyPhotocards {
   userNickname: string;
   gradeCounts: GradeCounts;
-  data: PhotocardInfo[];
+  list: PhotocardInfo[] | null;
   nextCursor: Cursor | null;
   hasMore: boolean;
   filterInfo?: FilterPhotoCard; // 필터링 정보 추가
@@ -28,7 +28,7 @@ export interface GradeCounts {
  */
 export interface Cursor {
   id: string;
-  createdAt: string;
+  createdAt?: string;
 }
 
 /**
@@ -65,7 +65,7 @@ export type GetMyPhotocards = (
   queries: MyPhotocardsQuery
 ) => Promise<MyPhotocards>;
 
-export type MyPhotocardsQuery = z.infer<typeof PhotocardsQuerySchema>;
+export type MyPhotocardsQuery = z.infer<typeof PhotocardsQueryWithTransform>;
 
 // 이전 버전과의 호환성을 위한 타입 별칭 정의
 export type MyPhotocardsResponse = MyPhotocards;
