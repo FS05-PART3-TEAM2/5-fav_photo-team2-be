@@ -8,8 +8,32 @@ const prisma = new PrismaClient();
 /**
  * 교환제안 취소/거절
  * @param id 교환제안 ID
+ * @param userId 현재 사용자 ID
  */
-export const declineOffer = async (id: string): Promise<ExchangeOffer> => {
+export const declineOffer = async (
+  id: string,
+  userId: string
+): Promise<ExchangeOffer> => {
+  // 교환 제안 조회
+  const exchangeOffer = await prisma.exchangeOffer.findUnique({
+    where: { id },
+    include: {
+      saleCard: true,
+    },
+  });
+
+  if (!exchangeOffer) {
+    throw new CustomError("교환제안을 찾을 수 없습니다.", 404);
+  }
+
+  // 권한 검증: 제안을 한 사람이거나 판매자만 거절/취소할 수 있음
+  if (
+    exchangeOffer.offererId !== userId &&
+    exchangeOffer.saleCard.sellerId !== userId
+  ) {
+    throw new CustomError("교환 제안을 거절/취소할 권한이 없습니다.", 403);
+  }
+
   return prisma.exchangeOffer.update({
     where: { id },
     data: { status: "FAILED" },
@@ -20,20 +44,36 @@ export const declineOffer = async (id: string): Promise<ExchangeOffer> => {
  * 교환제안 승인
  *
  * @param id 교환제안 ID
+ * @param userId 현재 사용자 ID
  *
  * seller : 판매 카드 소유자
  * offerer : 교환 제안자 (카드 미소유)
  * seller -> offerer : 판매 카드 제공
  */
-export const acceptOffer = async (id: string): Promise<ExchangeOffer> => {
+export const acceptOffer = async (
+  id: string,
+  userId: string
+): Promise<ExchangeOffer> => {
   return prisma.$transaction(async (tx) => {
     // 1. 교환제안 조회
-    const exchangeOffer = await tx.exchangeOffer.findUnique({ where: { id } });
+    const exchangeOffer = await tx.exchangeOffer.findUnique({
+      where: { id },
+      include: {
+        saleCard: true,
+      },
+    });
+
     if (!exchangeOffer) {
       throw new CustomError("교환제안을 찾을 수 없습니다.", 404);
     }
+
     if (exchangeOffer.status !== "PENDING") {
       throw new CustomError("교환제안이 PENDING 상태가 아닙니다.", 400);
+    }
+
+    // 권한 검증: 판매자만 승인할 수 있음
+    if (exchangeOffer.saleCard.sellerId !== userId) {
+      throw new CustomError("교환 제안을 승인할 권한이 없습니다.", 403);
     }
 
     // 2. 해당 saleCard 조회
