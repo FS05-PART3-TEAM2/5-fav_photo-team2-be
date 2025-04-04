@@ -42,12 +42,12 @@ export const signupService = async (
   });
 
   // 포인트 정보 생성
-  await prisma.point.create({
+  const point = await prisma.point.create({
     data: { userId: user.id, points: 1000 },
   });
   await prisma.pointHistory.create({
     data: {
-      userId: user.id,
+      pointId: point.id,
       amount: 1000,
       resourceType: "SIGNUP",
       resourceId: "SIGNUP",
