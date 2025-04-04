@@ -1,4 +1,5 @@
 import { ApiSignature } from "../../../types";
+import marketCuService from "../services/market.cu.service";
 import marketService from "../services/market.service";
 
 const getMarketList: ApiSignature = async (req, res) => {
@@ -35,11 +36,21 @@ const getMarketMeCount: ApiSignature = async (req, res) => {
   res.status(200).send(response);
 };
 
+const createMarketItem: ApiSignature = async (req, res) => {
+  const userId = req.user.id;
+  const body = req.body;
+
+  const response = await marketCuService.createMarketItem(body, userId);
+
+  res.status(201).send(response);
+};
+
 const marketController = {
   getMarketList,
   getMarketMe,
   getMarketListCount,
   getMarketMeCount,
+  createMarketItem,
 };
 
 export default marketController;
