@@ -10,11 +10,10 @@ const prisma = new PrismaClient();
  * @param id 교환제안 ID
  */
 export const declineOffer = async (id: string): Promise<ExchangeOffer> => {
-  const result = await prisma.exchangeOffer.update({
+  return prisma.exchangeOffer.update({
     where: { id },
     data: { status: "FAILED" },
   });
-  return result as unknown as ExchangeOffer;
 };
 
 /**
