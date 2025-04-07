@@ -8,7 +8,6 @@ import { userPhotoCards } from "./userPhotoCard.seed";
 import { saleCards } from "./saleCard.seed";
 import { exchangeOffers } from "./exchangeOffers.seed";
 import { notifications } from "./notifications.seed";
-import { pointHistories } from "./pointHistory.seed";
 import { randomBoxDraws } from "./randombox.seed";
 
 const prisma = new PrismaClient();
@@ -16,14 +15,14 @@ const prisma = new PrismaClient();
 async function main() {
   console.log("Start seeding...");
 
-  await prisma.user.deleteMany();
-  await prisma.photoCard.deleteMany();
-  await prisma.userPhotoCard.deleteMany();
-  await prisma.saleCard.deleteMany();
-  await prisma.exchangeOffer.deleteMany();
-  await prisma.notification.deleteMany();
-  await prisma.pointHistory.deleteMany();
-  await prisma.randomBoxDraw.deleteMany();
+  // await prisma.exchangeOffer.deleteMany();
+  // await prisma.saleCard.deleteMany();
+  // await prisma.userPhotoCard.deleteMany();
+  // await prisma.photoCard.deleteMany();
+  // await prisma.marketOffer.deleteMany();
+  // await prisma.notification.deleteMany();
+  // await prisma.randomBoxDraw.deleteMany();
+  // await prisma.user.deleteMany();
 
   // 0. user
   await prisma.user.createMany({
@@ -51,6 +50,14 @@ async function main() {
     data: saleCards,
     skipDuplicates: true,
   });
+  await prisma.marketOffer.createMany({
+    data: saleCards.map((card) => ({
+      saleCardId: card.id,
+      type: "SALE",
+      ownerId: card.sellerId,
+    })),
+    skipDuplicates: true,
+  });
 
   // 4. ExchangeOffer
   console.log("> Creating ExchangeOffers...");
@@ -58,18 +65,19 @@ async function main() {
     data: exchangeOffers,
     skipDuplicates: true,
   });
+  await prisma.marketOffer.createMany({
+    data: exchangeOffers.map((card) => ({
+      exchangeOfferId: card.id,
+      type: "EXCHANGE",
+      ownerId: card.offererId,
+    })),
+    skipDuplicates: true,
+  });
 
   // 5. Notification
   console.log("> Creating Notifications...");
   await prisma.notification.createMany({
     data: notifications,
-    skipDuplicates: true,
-  });
-
-  // 6. PointHistory
-  console.log("> Creating PointHistories...");
-  await prisma.pointHistory.createMany({
-    data: pointHistories,
     skipDuplicates: true,
   });
 
