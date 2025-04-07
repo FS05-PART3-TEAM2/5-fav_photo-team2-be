@@ -18,10 +18,7 @@ import {
   cancelMarketItemCtrl,
   updateMarketItemCtrl,
 } from "./controllers/market.update.controller";
-import {
-  CancelMarketItemSchema,
-  UpdateMarketItemSchema,
-} from "./validators/market.update.validators";
+import { UpdateMarketItemSchema } from "./validators/market.update.validators";
 
 const router = Router();
 
@@ -54,7 +51,6 @@ router.post(
   requestHandler(marketController.createMarketItem)
 );
 
-// 판매 등록한 포토카드 수정
 router.patch(
   "/:id",
   authenticate,
@@ -62,13 +58,7 @@ router.patch(
   requestHandler(updateMarketItemCtrl)
 );
 
-// 판매 등록한 포토카드 취소(내리기)
-router.post(
-  "/cancel",
-  authenticate,
-  validateAll({ body: CancelMarketItemSchema }),
-  requestHandler(cancelMarketItemCtrl)
-);
+router.patch("/:id/cancel", authenticate, requestHandler(cancelMarketItemCtrl));
 
 router.get("/:id/detail", authenticate, requestHandler(getBasicDetailCtrl));
 

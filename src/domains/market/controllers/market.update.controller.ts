@@ -1,9 +1,6 @@
 import { Request, Response } from "express";
 import marketUpdateService from "../services/market.update.services";
-import {
-  CancelMarketItemRequest,
-  UpdateMarketItemRequest,
-} from "../types/market.update.types";
+import { UpdateMarketItemRequest } from "../types/market.update.types";
 
 // 판매 등록한 포토카드 수정
 export const updateMarketItemCtrl = async (req: Request, res: Response) => {
@@ -48,14 +45,17 @@ export const updateMarketItemCtrl = async (req: Request, res: Response) => {
 // 판매 등록한 포토카드 취소
 export const cancelMarketItemCtrl = async (req: Request, res: Response) => {
   try {
-    const body = req.body as CancelMarketItemRequest;
+    const { id: saleCardId } = req.params;
     const userId = req.user!.id;
-    console.log(`포토카드 판매 취소 요청: ${body.saleCardId}`);
+    console.log(`포토카드 판매 취소 요청: ${saleCardId}`);
     console.log(`요청한 사용자 ID: ${userId}`);
 
-    const result = await marketUpdateService.cancelMarketItem(body, userId);
+    const result = await marketUpdateService.cancelMarketItem(
+      saleCardId,
+      userId
+    );
 
-    console.log(`포토카드 판매 취소 성공: ${body.saleCardId}`);
+    console.log(`포토카드 판매 취소 성공: ${saleCardId}`);
     res.status(201).json(result);
   } catch (error: any) {
     console.error(`포토카드 판매 취소 실패:`, error);

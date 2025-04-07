@@ -5,13 +5,12 @@ import {
   UpdateMarketItem,
 } from "../types/market.update.types";
 
-// 판매 등록한 포토카드 수정
+// 판매 등록한 포토카드 수정 (기존 판매 삭제 후 새로 등록)
 const updateMarketItem: UpdateMarketItem = async (saleCardId, body, userId) => {
   const { quantity, price, exchangeOffer } = body;
   const { grade, genre, description } = exchangeOffer || {};
 
   // 판매 중인 카드가 존재하는지, 판매자가 본인인지 확인
-  console.log(`서비스에서 검색하는 카드 ID: ${saleCardId}`);
   const saleCard = await prisma.saleCard.findUnique({
     where: { id: saleCardId },
     include: {
@@ -22,7 +21,6 @@ const updateMarketItem: UpdateMarketItem = async (saleCardId, body, userId) => {
       userPhotoCard: true,
     },
   });
-  console.log(`검색 결과: ${saleCard ? "카드 찾음" : "카드 찾지 못함"}`);
 
   if (!saleCard) throw new CustomError("Sale card not found", 404);
   if (saleCard.sellerId !== userId)
@@ -34,31 +32,39 @@ const updateMarketItem: UpdateMarketItem = async (saleCardId, body, userId) => {
   if (quantity !== undefined && saleCard.userPhotoCard.quantity < quantity)
     throw new CustomError("Not enough quantity", 400);
 
-  // 업데이트할 데이터 객체 생성
-  const updateData: any = {
-    updatedAt: new Date(),
-  };
-
-  // 제공된 필드만 업데이트 데이터에 추가
-  if (quantity !== undefined) {
-    updateData.quantity = quantity;
-  }
-
-  if (price !== undefined) {
-    updateData.price = price;
-  }
-
-  if (exchangeOffer !== undefined) {
-    updateData.exchangeDescription = description || "";
-    updateData.exchangeGrade = grade || "";
-    updateData.exchangeGenre = genre || "";
-  }
-
   // === 트랜잭션으로 묶기 ===
-  const updatedSaleCard = await prisma.$transaction(async (tx) => {
-    const updatedSaleCard = await tx.saleCard.update({
-      where: { id: saleCardId },
-      data: updateData,
+  const result = await prisma.$transaction(async (tx) => {
+    // 1. 기존 교환 제안 조회
+    const existingExchangeOffers = await tx.exchangeOffer.findMany({
+      where: {
+        saleCardId: saleCardId,
+        status: "PENDING", // 대기 중인 제안만 가져옴
+      },
+    });
+
+    // 2. 기존 마켓 오퍼 조회 (교환 제안 관련 오퍼)
+    const existingMarketOffers = await tx.marketOffer.findMany({
+      where: {
+        saleCardId: saleCardId,
+        type: "EXCHANGE", // 교환 제안 타입만 가져옴
+      },
+    });
+
+    // 3. 새로운 판매 카드 생성
+    const newSaleCard = await tx.saleCard.create({
+      data: {
+        quantity: quantity !== undefined ? quantity : saleCard.quantity,
+        price: price !== undefined ? price : saleCard.price,
+        status: "ON_SALE",
+        exchangeDescription: exchangeOffer
+          ? description || ""
+          : saleCard.exchangeDescription,
+        exchangeGrade: exchangeOffer ? grade || "" : saleCard.exchangeGrade,
+        exchangeGenre: exchangeOffer ? genre || "" : saleCard.exchangeGenre,
+        sellerId: userId,
+        photoCardId: saleCard.photoCardId,
+        userPhotoCardId: saleCard.userPhotoCardId,
+      },
       include: {
         photoCard: true,
         seller: {
@@ -68,41 +74,84 @@ const updateMarketItem: UpdateMarketItem = async (saleCardId, body, userId) => {
       },
     });
 
-    return updatedSaleCard;
+    // 4. 새로운 판매 오퍼 생성
+    await tx.marketOffer.create({
+      data: {
+        type: "SALE",
+        ownerId: userId,
+        saleCardId: newSaleCard.id,
+        exchangeOfferId: null,
+      },
+    });
+
+    // 5. 기존 교환 제안을 새 카드로 마이그레이션
+    for (const offer of existingExchangeOffers) {
+      await tx.exchangeOffer.update({
+        where: { id: offer.id },
+        data: {
+          saleCardId: newSaleCard.id,
+          updatedAt: new Date(),
+        },
+      });
+    }
+
+    // 6. 기존 마켓 오퍼의 saleCardId 업데이트
+    for (const offer of existingMarketOffers) {
+      await tx.marketOffer.update({
+        where: { id: offer.id },
+        data: {
+          saleCardId: newSaleCard.id,
+          updatedAt: new Date(),
+        },
+      });
+    }
+
+    // 7. 판매자의 마켓 오퍼 삭제 (자신의 판매 오퍼)
+    await tx.marketOffer.deleteMany({
+      where: {
+        saleCardId,
+        type: "SALE",
+        ownerId: userId,
+      },
+    });
+
+    // 8. 기존 판매 카드 삭제
+    await tx.saleCard.delete({
+      where: { id: saleCardId },
+    });
+
+    return newSaleCard;
   });
 
   // === 결과 리턴 ===
   return {
-    saleCardId: updatedSaleCard.id,
-    userPhotoCardId: updatedSaleCard.userPhotoCardId,
-    status: updatedSaleCard.status,
-    name: updatedSaleCard.photoCard.name,
-    genre: updatedSaleCard.photoCard.genre,
-    grade: updatedSaleCard.photoCard.grade,
-    price: updatedSaleCard.price,
-    image: updatedSaleCard.photoCard.imageUrl,
-    remaining: updatedSaleCard.quantity,
-    total: updatedSaleCard.userPhotoCard.quantity,
-    createdAt: updatedSaleCard.createdAt.toISOString(),
-    updatedAt: updatedSaleCard.updatedAt.toISOString(),
+    saleCardId: result.id,
+    userPhotoCardId: result.userPhotoCardId,
+    status: result.status,
+    name: result.photoCard.name,
+    genre: result.photoCard.genre,
+    grade: result.photoCard.grade,
+    price: result.price,
+    image: result.photoCard.imageUrl,
+    remaining: result.quantity, // 새로운 판매 카드의 remaining은 total과 같음
+    total: result.quantity, // total은 설정한 quantity와 동일하게 설정
+    createdAt: result.createdAt.toISOString(),
+    updatedAt: result.updatedAt.toISOString(),
     owner: {
       id: userId,
-      nickname: updatedSaleCard.seller.nickname,
+      nickname: result.seller.nickname,
     },
     exchangeOffer: {
-      description: updatedSaleCard.exchangeDescription,
-      grade: updatedSaleCard.exchangeGrade,
-      genre: updatedSaleCard.exchangeGenre,
+      description: result.exchangeDescription,
+      grade: result.exchangeGrade,
+      genre: result.exchangeGenre,
     },
   };
 };
 
 // 판매 등록한 포토카드 취소
-const cancelMarketItem: CancelMarketItem = async (body, userId) => {
-  const { saleCardId } = body;
-
+const cancelMarketItem: CancelMarketItem = async (saleCardId, userId) => {
   // 판매 중인 카드가 존재하는지, 판매자가 본인인지 확인
-  console.log(`서비스에서 검색하는 카드 ID: ${saleCardId}`);
   const saleCard = await prisma.saleCard.findUnique({
     where: { id: saleCardId },
     include: {
@@ -113,7 +162,6 @@ const cancelMarketItem: CancelMarketItem = async (body, userId) => {
       userPhotoCard: true,
     },
   });
-  console.log(`검색 결과: ${saleCard ? "카드 찾음" : "카드 찾지 못함"}`);
 
   if (!saleCard) throw new CustomError("Sale card not found", 404);
   if (saleCard.sellerId !== userId)
@@ -123,6 +171,19 @@ const cancelMarketItem: CancelMarketItem = async (body, userId) => {
 
   // === 트랜잭션으로 묶기 ===
   const canceledSaleCard = await prisma.$transaction(async (tx) => {
+    // 1. 모든 대기 중인 교환 제안 취소
+    await tx.exchangeOffer.updateMany({
+      where: {
+        saleCardId: saleCardId,
+        status: "PENDING",
+      },
+      data: {
+        status: "CANCELED",
+        updatedAt: new Date(),
+      },
+    });
+
+    // 2. 판매 카드 취소 처리
     const canceledSaleCard = await tx.saleCard.update({
       where: { id: saleCardId },
       data: {
@@ -138,7 +199,7 @@ const cancelMarketItem: CancelMarketItem = async (body, userId) => {
       },
     });
 
-    // 관련 MarketOffer 삭제
+    // 3. 모든 관련 마켓 오퍼 삭제
     await tx.marketOffer.deleteMany({
       where: { saleCardId },
     });

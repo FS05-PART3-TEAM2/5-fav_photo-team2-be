@@ -12,8 +12,3 @@ export const UpdateMarketItemSchema = z.object({
     })
     .optional(),
 });
-
-// 포토카드 판매 취소를 위한 검증 스키마
-export const CancelMarketItemSchema = z.object({
-  saleCardId: z.string(),
-});

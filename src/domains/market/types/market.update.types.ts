@@ -1,12 +1,8 @@
 import { z } from "zod";
-import {
-  CancelMarketItemSchema,
-  UpdateMarketItemSchema,
-} from "../validators/market.update.validators";
+import { UpdateMarketItemSchema } from "../validators/market.update.validators";
 
 // 검증 스키마로부터 타입 추론
 export type UpdateMarketItemRequest = z.infer<typeof UpdateMarketItemSchema>;
-export type CancelMarketItemRequest = z.infer<typeof CancelMarketItemSchema>;
 
 // 서비스 함수 타입 정의
 export type UpdateMarketItem = (
@@ -16,7 +12,7 @@ export type UpdateMarketItem = (
 ) => Promise<MarketItemResponse>;
 
 export type CancelMarketItem = (
-  body: CancelMarketItemRequest,
+  saleCardId: string,
   userId: string
 ) => Promise<MarketItemResponse>;
 
