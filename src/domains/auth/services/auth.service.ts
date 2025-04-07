@@ -173,6 +173,7 @@ export const getMeService = async (userId: string) => {
   }
   return {
     id: user.id,
+    email: user.email,
     nickname: user.nickname,
     points: user.points?.points,
   };
