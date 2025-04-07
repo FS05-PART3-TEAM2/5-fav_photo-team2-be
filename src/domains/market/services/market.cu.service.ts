@@ -106,6 +106,7 @@ const purchaseMarketItem: PurchaseMarketItem = async (body, userId) => {
       quantity: true, // 포토카드 판매 수량 (saleCount)
       price: true, // 판매 포토카드 가격
       sellerId: true, // 판매자 ID
+      status: true, // 판매 카드 상태
       photoCardId: true, // 포토카드 ID
       photoCard: {
         select: {
@@ -124,10 +125,17 @@ const purchaseMarketItem: PurchaseMarketItem = async (body, userId) => {
     sellerId,
     price,
     quantity: saleCount,
+    status,
     photoCard,
   } = saleCard; // 판매 카드 정보
   const { name: cardName, grade } = photoCard; // 포토카드 정보
   const totalPrice = price * quantity; // 총 구매 가격
+  let isSoldOut = saleCard.status === "SOLD_OUT"; // 품절 여부
+
+  // 판매 카드 상태 확인
+  if (isSoldOut) {
+    throw new CustomError("판매 카드가 품절되었습니다", 409);
+  }
 
   // 포토카드 구매 트랜잭션
   await prisma.$transaction(async (tx) => {
@@ -157,6 +165,14 @@ const purchaseMarketItem: PurchaseMarketItem = async (body, userId) => {
     // 2-2. 재고 확인
     if (stockCount < quantity) {
       throw new CustomError("판매 카드의 재고가 부족합니다", 409);
+    }
+    if (stockCount === quantity) {
+      // 재고량과 구매량이 같을 경우 품절 상태로 변경
+      await tx.saleCard.update({
+        where: { id: saleCardId },
+        data: { status: "SOLD_OUT" }, // 판매 카드 상태 변경
+      });
+      isSoldOut = true; // 품절 상태로 변경
     }
 
     // 3-1. 구매자 포인트 락 (랜덤박스로 얻는 포인트와 동시성 막기 위해)
@@ -284,13 +300,17 @@ const purchaseMarketItem: PurchaseMarketItem = async (body, userId) => {
         message: `[${grade}|${cardName}]을 ${quantity}장을 성공적으로 구매했습니다.`,
       },
     });
-    // 3. 품절될 경우 알림 추가 (판매자가 판매중인 카드가 품절되었습니다.)
-    await tx.notification.create({
-      data: {
-        userId: sellerId,
-        message: `[${grade}|${cardName}]이 품절되었습니다.`,
-      },
-    });
+
+    // 3. 구매자에게 포토카드 추가 알림 (구매한 포토카드가 없을 경우)
+
+    if (isSoldOut) {
+      await tx.notification.create({
+        data: {
+          userId: sellerId,
+          message: `[${grade}|${cardName}]이 품절 되었습니다.`,
+        },
+      });
+    }
   });
 
   // 성공 메시지 리턴
