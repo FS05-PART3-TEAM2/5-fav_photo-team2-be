@@ -10,7 +10,7 @@ const prisma = new PrismaClient();
  * @param id 교환제안 ID
  * @param userId 현재 사용자 ID
  */
-export const declineOffer = async (
+export const failOffer = async (
   id: string,
   userId: string
 ): Promise<ExchangeOffer> => {

@@ -13,7 +13,7 @@ import {
   RequestMarketItemSchema,
 } from "./validators/market.validator";
 import {
-  declineOfferController,
+  failOfferController,
   acceptOfferController,
 } from "./controllers/exchange.controller";
 import { authenticate } from "../../middlewares/auth.middleware";
@@ -54,7 +54,7 @@ router.get("/:id/detail", authenticate, requestHandler(getBasicDetailCtrl));
 router.get("/:id/exchange", authenticate, requestHandler(getExchangeCtrl));
 
 // Exchange routes
-router.patch("/exchange/:id/fail", authenticate, declineOfferController);
+router.patch("/exchange/:id/fail", authenticate, failOfferController);
 router.patch("/exchange/:id/accept", authenticate, acceptOfferController);
 
 export default router;

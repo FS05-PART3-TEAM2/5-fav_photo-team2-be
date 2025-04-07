@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
-import { declineOffer, acceptOffer } from "../services/exchange.service";
+import { failOffer, acceptOffer } from "../services/exchange.service";
 import { CustomError } from "../../../utils/errors";
 
-export const declineOfferController = async (
+export const failOfferController = async (
   req: Request,
   res: Response
 ): Promise<void> => {
@@ -16,15 +16,15 @@ export const declineOfferController = async (
     }
     const userId = req.user.id;
 
-    const response = await declineOffer(id, userId);
+    const response = await failOffer(id, userId);
 
     res.status(200).json(response);
   } catch (error: any) {
-    console.error("Exchange decline error:", error);
+    console.error("Exchange fail error:", error);
     if (error instanceof CustomError) {
       res.status(error.statusCode).json({ error: error.message });
     } else {
-      res.status(500).json({ error: "Failed to decline exchange offer" });
+      res.status(500).json({ error: "Failed to fail exchange offer" });
     }
   }
 };
