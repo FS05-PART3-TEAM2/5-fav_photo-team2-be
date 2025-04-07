@@ -18,7 +18,12 @@ export const declineOffer = async (
   const exchangeOffer = await prisma.exchangeOffer.findUnique({
     where: { id },
     include: {
-      saleCard: true,
+      saleCard: {
+        include: {
+          photoCard: true,
+          seller: true,
+        },
+      },
     },
   });
 
@@ -34,10 +39,53 @@ export const declineOffer = async (
     throw new CustomError("교환 제안을 거절/취소할 권한이 없습니다.", 403);
   }
 
-  return prisma.exchangeOffer.update({
+  // 제안자 정보 조회
+  const offerer = await prisma.user.findUnique({
+    where: { id: exchangeOffer.offererId },
+  });
+  if (!offerer) {
+    throw new CustomError("교환 제안자 정보를 찾을 수 없습니다.", 404);
+  }
+
+  // 업데이트 전의 상태 저장
+  const prevStatus = exchangeOffer.status;
+
+  // 거절 또는 취소로 상태 업데이트
+  const updatedOffer = await prisma.exchangeOffer.update({
     where: { id },
     data: { status: "FAILED" },
   });
+
+  // 알림 생성
+  if (prevStatus === "PENDING") {
+    // 거절 알림
+    if (exchangeOffer.saleCard.sellerId === userId) {
+      // 판매자가 거절한 경우: offerer에게 알림
+      await createNotification({
+        userId: exchangeOffer.offererId,
+        message: `[${exchangeOffer.saleCard.photoCard.grade} | ${exchangeOffer.saleCard.photoCard.name}]의 교환이 거절되었습니다.`,
+      });
+    } else {
+      // offerer가 취소한 경우: seller에게 알림
+      await createNotification({
+        userId: exchangeOffer.saleCard.sellerId,
+        message: `${offerer.nickname}님의 교환 제안이 취소되었습니다.`,
+      });
+    }
+  } else if (prevStatus === "ACCEPTED") {
+    // 이미 수락된 상태에서 품절 등의 이유로 실패한 경우
+    await createNotification({
+      userId: exchangeOffer.offererId,
+      message: `[${exchangeOffer.saleCard.photoCard.grade} | ${exchangeOffer.saleCard.photoCard.name}]의 교환이 실패했습니다.`,
+    });
+
+    await createNotification({
+      userId: exchangeOffer.saleCard.sellerId,
+      message: `교환이 실패했습니다.`,
+    });
+  }
+
+  return updatedOffer;
 };
 
 /**
@@ -60,7 +108,12 @@ export const acceptOffer = async (
     const exchangeOffer = await tx.exchangeOffer.findUnique({
       where: { id },
       include: {
-        saleCard: true,
+        saleCard: {
+          include: {
+            photoCard: true,
+            seller: true,
+          },
+        },
       },
     });
 
@@ -75,6 +128,14 @@ export const acceptOffer = async (
     // 권한 검증: 판매자만 승인할 수 있음
     if (exchangeOffer.saleCard.sellerId !== userId) {
       throw new CustomError("교환 제안을 승인할 권한이 없습니다.", 403);
+    }
+
+    // 제안자(offerer) 정보 조회
+    const offerer = await tx.user.findUnique({
+      where: { id: exchangeOffer.offererId },
+    });
+    if (!offerer) {
+      throw new CustomError("교환 제안자 정보를 찾을 수 없습니다.", 404);
     }
 
     // 2. 해당 saleCard 조회
@@ -97,6 +158,17 @@ export const acceptOffer = async (
     }
     if (offererCard.quantity < 1) {
       throw new CustomError("교환 제안 카드의 수량이 부족합니다.", 400);
+    }
+
+    // 교환 제안 카드의 포토카드 정보 조회
+    const offeredPhotoCard = await tx.photoCard.findUnique({
+      where: { id: offererCard.photoCardId },
+    });
+    if (!offeredPhotoCard) {
+      throw new CustomError(
+        "교환 제안 카드의 포토카드 정보를 찾을 수 없습니다.",
+        404
+      );
     }
 
     // 4. 판매 대상 카드를 seller의 인벤토리에서 차감
@@ -238,15 +310,16 @@ export const acceptOffer = async (
       },
     });
 
-    // 11. 알림 생성
+    // 11. 알림 생성 - 판매자(seller)와 교환 제안자(offerer) 모두에게 알림 전송
     await createNotification({
       userId: saleCard.sellerId,
-      message: "교환 제안이 승인되었습니다.",
+      message: `${offerer.nickname}님과의 교환이 성사되었습니다.`,
     });
 
+    // offerer에게는 seller의 닉네임과 카드 이름을 포함한 메시지 전송
     await createNotification({
       userId: exchangeOffer.offererId,
-      message: "교환이 성사되었습니다.",
+      message: `${exchangeOffer.saleCard.seller.nickname}님과의 [${exchangeOffer.saleCard.photoCard.grade} | ${exchangeOffer.saleCard.photoCard.name}] 교환이 성사되었습니다.`,
     });
 
     return acceptedOffer as unknown as ExchangeOffer;
