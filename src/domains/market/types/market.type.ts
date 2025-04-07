@@ -20,7 +20,7 @@ export type GetMarketList = (
   queries: MarketListQuery
 ) => Promise<MarketListResponse>;
 export type GetMarketMeList = (
-  queires: MarketMeQuery,
+  queries: MarketMeQuery,
   user: { id: string; role: string }
 ) => Promise<MarketMeListResponse>;
 export type GetMarketListCount = (
