@@ -78,11 +78,6 @@ export const failOffer = async (
       userId: exchangeOffer.offererId,
       message: `[${exchangeOffer.saleCard.photoCard.grade} | ${exchangeOffer.saleCard.photoCard.name}]의 교환이 실패했습니다.`,
     });
-
-    await createNotification({
-      userId: exchangeOffer.saleCard.sellerId,
-      message: `교환이 실패했습니다.`,
-    });
   }
 
   return updatedOffer;
