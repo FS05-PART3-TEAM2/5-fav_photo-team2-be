@@ -54,7 +54,7 @@ router.get("/:id/detail", authenticate, requestHandler(getBasicDetailCtrl));
 router.get("/:id/exchange", authenticate, requestHandler(getExchangeCtrl));
 
 // Exchange routes
-router.patch("/exchange/:id/decline", authenticate, declineOfferController);
+router.patch("/exchange/:id/fail", authenticate, declineOfferController);
 router.patch("/exchange/:id/accept", authenticate, acceptOfferController);
 
 export default router;
