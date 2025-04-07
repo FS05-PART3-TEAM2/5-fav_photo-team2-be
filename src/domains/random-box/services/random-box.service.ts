@@ -1,6 +1,7 @@
-import prisma from '../../../utils/prismaClient';
-import { RemainingTimeResult } from '../interfaces/random-box.interface';
-import { rewardTableBox1, rewardTableBox2 } from './randomRewardTable.service';
+import { get } from "http";
+import prisma from "../../../utils/prismaClient";
+import { RemainingTimeResult } from "../interfaces/random-box.interface";
+import { rewardTableBox1, rewardTableBox2 } from "./randomRewardTable.service";
 
 // 최근 뽑기 시간 조회
 export const getRemainingTime = async (
@@ -9,7 +10,7 @@ export const getRemainingTime = async (
   // 최근 뽑기 기록 조회
   const lastDraw = await prisma.randomBoxDraw.findFirst({
     where: { userId },
-    orderBy: { createdAt: 'desc' },
+    orderBy: { createdAt: "desc" },
   });
 
   // 쿨타임 없으면 바로 뽑기 가능
@@ -33,15 +34,16 @@ export const getRemainingTime = async (
     canDraw,
     remainingSeconds: remaining,
     message: canDraw
-      ? '지금 바로 뽑을 수 있습니당!'
+      ? "뽑기 가능"
       : `아직 ${Math.ceil(remaining / 60)}분 남았습니다.`,
   };
 };
-
-// 확률 테이블 기반 포인트 추첨
-// 균등 분포 실수 ( 모든 값이 나올 확률이 같음. )
-// 0 ~ 100 중에서 어느 구간에서 멈추는가에 따라 확률이 정해지는건데 (ex. 25면 0~40인 0포인트, 99.991이면 99.99~100 인 1000포인트 )
-// 구간 중 몇 퍼센트에 해당하느냐는 누적분포 방식, 수학적으로는 동등
+/*
+ * 확률 테이블 기반 포인트 추첨
+ * 균등 분포 실수 ( 모든 값이 나올 확률이 같음. )
+ * 0 ~ 100 중에서 어느 구간에서 멈추는가에 따라 확률이 정해지는건데 (ex. 25면 0~40인 0포인트, 99.991이면 99.99~100 인 1000포인트 )
+ * 구간 중 몇 퍼센트에 해당하느냐는 누적분포 방식, 수학적으로는 동등
+ */
 export const getRandomPoint = (
   table: { point: number; chance: number }[]
 ): number => {
@@ -70,13 +72,13 @@ export const drawBox = async (userId: string, userPick: number) => {
   const winningBox = boxes[Math.floor(Math.random() * boxes.length)];
   console.log(winningBox);
 
-  const boxMapping: Record<number, '당첨' | '꽝'> = {
-    1: '꽝',
-    2: '꽝', //초기 키 타입 꽝,
-    3: '꽝',
+  const boxMapping: Record<number, "당첨" | "꽝"> = {
+    1: "꽝",
+    2: "꽝", //초기 키 타입 꽝,
+    3: "꽝",
   };
   console.log(boxMapping);
-  boxMapping[winningBox] = '당첨'; // 무작위로 지정된 당첨 박스 키타입 지정
+  boxMapping[winningBox] = "당첨"; // 무작위로 지정된 당첨 박스 키타입 지정
 
   const isHit = userPick === winningBox;
   const rewardTable = isHit ? rewardTableBox1 : rewardTableBox2;
