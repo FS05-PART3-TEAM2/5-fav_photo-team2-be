@@ -1,5 +1,6 @@
 import { Router } from "express";
 import {
+  getMe,
   login,
   refreshAccessToken,
   signup,
@@ -11,17 +12,6 @@ const router = Router();
 router.post("/signup", requestHandler(signup));
 router.post("/login", requestHandler(login));
 router.post("/refresh", requestHandler(refreshAccessToken));
-router.get(
-  "/me",
-  authenticate,
-  requestHandler((req, res) => {
-    res.status(200).json({
-      user: {
-        id: req.user.id,
-        role: req.user.role,
-      },
-    });
-  })
-);
+router.get("/me", authenticate, requestHandler(getMe));
 
 export default router;

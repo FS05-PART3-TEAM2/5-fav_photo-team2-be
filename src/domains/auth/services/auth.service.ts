@@ -156,3 +156,24 @@ export const refreshTokenService = async (
   });
   res.status(200).json({ message: "accessToken 재발급 완료" });
 };
+
+export const getMeService = async (userId: string) => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      email: true,
+      nickname: true,
+      role: true,
+      points: true,
+    },
+  });
+  if (!user) {
+    throw new CustomError("유저를 찾을 수 없습니다.", 400);
+  }
+  return {
+    id: user.id,
+    nickname: user.nickname,
+    points: user.points?.points,
+  };
+};
