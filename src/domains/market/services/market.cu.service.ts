@@ -107,11 +107,6 @@ const purchaseMarketItem: PurchaseMarketItem = async (body, userId) => {
       price: true, // 판매 포토카드 가격
       sellerId: true, // 판매자 ID
       photoCardId: true, // 포토카드 ID
-      seller: {
-        select: {
-          nickname: true, // 판매자의 nickname만 선택
-        },
-      },
       photoCard: {
         select: {
           name: true, // 포토카드 이름
@@ -129,10 +124,8 @@ const purchaseMarketItem: PurchaseMarketItem = async (body, userId) => {
     sellerId,
     price,
     quantity: saleCount,
-    seller,
     photoCard,
   } = saleCard; // 판매 카드 정보
-  const { nickname: sellerNick } = seller; // 판매자 닉네임
   const { name: cardName, grade } = photoCard; // 포토카드 정보
   const totalPrice = price * quantity; // 총 구매 가격
 
@@ -281,7 +274,7 @@ const purchaseMarketItem: PurchaseMarketItem = async (body, userId) => {
     await tx.notification.create({
       data: {
         userId: sellerId,
-        message: `${customerId}님이 [${grade}|${cardName}]을 ${quantity}장 구매했습니다.`,
+        message: `${customerNick}님이 [${grade}|${cardName}]을 ${quantity}장 구매했습니다.`,
       },
     });
     // 2. 구매자에게 알림 추가 (구매가 완료되었습니다.)
