@@ -1,5 +1,6 @@
 import { CustomError } from "../../../utils/errors";
 import prisma from "../../../utils/prismaClient";
+import { createNotification } from "../../notification/services/notificationService";
 import { CreateMarketItem } from "../types/market.type";
 
 const createMarketItem: CreateMarketItem = async (body, userId) => {
