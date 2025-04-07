@@ -53,3 +53,8 @@ export const RequestMarketItemSchema = z.object({
     })
     .optional(),
 });
+
+export const RequestPurchaseMarketItemSchema = z.object({
+  saleCardId: z.string(),
+  quantity: z.number().min(1),
+});

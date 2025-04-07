@@ -50,6 +50,12 @@ router.get("/:id/detail", authenticate, requestHandler(getBasicDetailCtrl));
 
 router.get("/:id/exchange", authenticate, requestHandler(getExchangeCtrl));
 
+router.post(
+  "/purchase",
+  authenticate,
+  requestHandler(marketController.purchaseMarketItem)
+);
+
 // Exchange routes
 router.patch("/exchange/:id/decline", authenticate, declineOfferController);
 
