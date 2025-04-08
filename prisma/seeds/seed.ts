@@ -30,6 +30,25 @@ async function main() {
     skipDuplicates: true,
   });
 
+  // 0-1. Points - 새 사용자에게 초기 포인트 10000000 지급
+  console.log("> Creating Points for new users...");
+  const pointsData = [
+    { userId: "0869d53a-dbf3-437d-bfca-14d412aa9431", points: 10000000 },
+    { userId: "28f18323-ced7-486c-9e1f-000fc3aaa92f", points: 10000000 },
+    { userId: "421a9881-7cbc-4ade-af9f-9c512fa18c17", points: 10000000 },
+    { userId: "5a4713ff-3ae3-409e-83d0-58925254f223", points: 10000000 },
+    { userId: "dc2d1de7-e87f-40d2-b104-6bb7a1fb98ed", points: 10000000 },
+    { userId: "de2c9417-d8f3-4c4e-b63f-ba648d9718e2", points: 10000000 },
+  ];
+
+  for (const point of pointsData) {
+    await prisma.point.upsert({
+      where: { userId: point.userId },
+      update: { points: point.points },
+      create: { userId: point.userId, points: point.points },
+    });
+  }
+
   // 1. PhotoCard
   console.log("> Creating PhotoCards...");
   await prisma.photoCard.createMany({

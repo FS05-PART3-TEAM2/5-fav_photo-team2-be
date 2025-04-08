@@ -183,7 +183,7 @@ const purchaseMarketItem: PurchaseMarketItem = async (body, userId) => {
     `;
     // 3-2. 구매자 포인트 감소
     const updatedCustomerPoint = await tx.point.update({
-      where: { id: customerId }, // 구매자 ID로 포인트 업데이트
+      where: { userId: customerId }, // 구매자 ID로 포인트 업데이트
       data: {
         points: { decrement: totalPrice }, // 총 구매 가격만큼 포인트 감소
       },
@@ -221,7 +221,7 @@ const purchaseMarketItem: PurchaseMarketItem = async (body, userId) => {
     `;
     // 4-2. 판매자 포인트 증가
     const updatedSellerPoint = await tx.point.update({
-      where: { id: sellerId }, // 판매자 ID로 포인트 업데이트
+      where: { userId: sellerId }, // 판매자 ID로 포인트 업데이트
       data: {
         points: { increment: totalPrice }, // 총 구매 가격만큼 포인트 증가
       },
