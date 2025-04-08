@@ -19,6 +19,7 @@ model SaleCard {
 
   marketOffer MarketOffer?
 
+  @@unique([createdAt, id])
   @@index([sellerId])
   @@index([status])
   @@index([photoCardId])

@@ -33,9 +33,9 @@ const getMarketList: GetMarketList = async (queries) => {
         cursor
           ? {
               OR: [
-                { createdAt: { lt: new Date(cursor.createdAt) } },
+                { createdAt: { lt: cursor.createdAt } },
                 {
-                  createdAt: { equals: new Date(cursor.createdAt) },
+                  createdAt: cursor.createdAt,
                   id: { lt: cursor.id },
                 },
               ],
@@ -61,6 +61,8 @@ const getMarketList: GetMarketList = async (queries) => {
         },
       ],
     },
+    take: limit,
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
     include: {
       seller: { select: { id: true, nickname: true } },
       userPhotoCard: { select: { quantity: true } },
@@ -75,8 +77,6 @@ const getMarketList: GetMarketList = async (queries) => {
         },
       },
     },
-    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-    take: limit,
   });
 
   // console.log(JSON.stringify(saleCards, null, 2));
@@ -188,9 +188,9 @@ const getMarketMe: GetMarketMeList = async (queries, user) => {
         cursor
           ? {
               OR: [
-                { createdAt: { lt: new Date(cursor.createdAt) } },
+                { createdAt: { lt: cursor.createdAt } },
                 {
-                  createdAt: { equals: new Date(cursor.createdAt) },
+                  createdAt: { equals: cursor.createdAt },
                   id: { lt: cursor.id },
                 },
               ],
@@ -204,6 +204,7 @@ const getMarketMe: GetMarketMeList = async (queries, user) => {
         {
           type: "SALE",
           saleCard: {
+            status: status || undefined, // status가 없으면 undefined로 설정
             photoCard: {
               AND: [
                 keyword
@@ -223,6 +224,7 @@ const getMarketMe: GetMarketMeList = async (queries, user) => {
         {
           type: "EXCHANGE",
           exchangeOffer: {
+            status: status || undefined, // status가 없으면 undefined로 설정
             saleCard: {
               photoCard: {
                 AND: [

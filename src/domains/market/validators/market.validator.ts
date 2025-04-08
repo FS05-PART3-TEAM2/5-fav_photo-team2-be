@@ -13,7 +13,7 @@ export const MarketListQuerySchema = z.object({
   limit: z
     .string()
     .optional()
-    .transform((v) => (v ? parseInt(v, 15) : undefined)),
+    .transform((v) => (v ? parseInt(v, 10) : undefined)),
   cursor: z.object({ id: z.string(), createdAt: z.string() }).optional(),
 });
 

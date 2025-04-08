@@ -5,6 +5,8 @@ import marketService from "../services/market.service";
 const getMarketList: ApiSignature = async (req, res) => {
   const queries = req.query;
 
+  console.log("queries", queries);
+
   const response = await marketService.getMarketList(queries);
 
   res.status(200).send(response);
