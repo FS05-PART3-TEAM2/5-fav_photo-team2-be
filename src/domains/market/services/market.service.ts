@@ -25,7 +25,7 @@ import {
  * @returns
  */
 const getMarketList: GetMarketList = async (queries) => {
-  const { keyword, genre, grade, cursor, limit } = queries;
+  const { keyword, genre, grade, cursor, limit = 15 } = queries;
 
   const saleCards: MarketCardDto[] = await prisma.saleCard.findMany({
     where: {
@@ -169,7 +169,7 @@ const getMarketList: GetMarketList = async (queries) => {
 };
 
 const getMarketMe: GetMarketMeList = async (queries, user) => {
-  const { keyword, genre, grade, status, cursor, limit } = queries;
+  const { keyword, genre, grade, status, cursor, limit = 15 } = queries;
   const userId = user.id;
 
   const marketOffers: MarketOfferDto[] = await prisma.marketOffer.findMany({
