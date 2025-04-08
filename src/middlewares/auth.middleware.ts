@@ -11,6 +11,8 @@ export const authenticate = (
   const token = req.cookies.token;
   const refreshToken = req.cookies.refreshToken;
 
+  console.log(req.cookies);
+
   if (!token && !refreshToken) {
     res.status(401).json({ message: "인증되지 않은 사용자 입니다." });
     return;

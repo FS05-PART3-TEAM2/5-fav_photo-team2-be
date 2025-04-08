@@ -108,8 +108,9 @@ export const loginService = async (data: LoginInput): Promise<AuthResponse> => {
       refreshToken: refreshToken,
       options: {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
+        // secure: process.env.NODE_ENV === "production",
+        secure: true,
+        sameSite: "none",
         maxAge: 60 * 60 * 1000,
       },
     },
@@ -154,4 +155,26 @@ export const refreshTokenService = async (
     maxAge: 60 * 60 * 1000,
   });
   res.status(200).json({ message: "accessToken 재발급 완료" });
+};
+
+export const getMeService = async (userId: string) => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      email: true,
+      nickname: true,
+      role: true,
+      points: true,
+    },
+  });
+  if (!user) {
+    throw new CustomError("유저를 찾을 수 없습니다.", 400);
+  }
+  return {
+    id: user.id,
+    email: user.email,
+    nickname: user.nickname,
+    points: user.points?.points,
+  };
 };
