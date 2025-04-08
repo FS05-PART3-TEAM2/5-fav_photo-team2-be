@@ -5,6 +5,7 @@ import {
   MarketItemResponse,
   UpdateMarketItem,
 } from "../types/market.update.types";
+import { createNotification } from "../../notification/services/notificationService";
 
 // 응답 객체 생성을 위한 공통 함수
 const createResponseObject = (
@@ -122,58 +123,24 @@ const updateMarketItem: UpdateMarketItem = async (saleCardId, body, userId) => {
       },
     });
 
-    // 4. 판매자의 기존 마켓 오퍼 삭제
-    await tx.marketOffer.deleteMany({
-      where: {
-        saleCardId,
-        type: "SALE",
-        ownerId: userId,
-      },
-    });
+    // 5. 교환 제안 처리 - 기존 제안을 새 판매 카드로 업데이트
+    if (pendingOffers.length > 0) {
+      // 기존 교환 제안들의 ID 목록
+      const pendingOfferIds = pendingOffers.map((offer) => offer.id);
 
-    // 5. 교환 제안 마이그레이션
-    for (const offer of pendingOffers) {
-      try {
-        // 5.1 새 교환 제안 생성
-        const newOffer = await tx.exchangeOffer.create({
-          data: {
-            offererId: offer.offererId,
-            userPhotoCardId: offer.userPhotoCardId,
-            content: offer.content,
-            saleCardId: newSaleCard.id,
-            status: "PENDING",
+      // 교환 제안들의 saleCardId를 새 판매 카드로 업데이트
+      await tx.exchangeOffer.updateMany({
+        where: {
+          id: {
+            in: pendingOfferIds,
           },
-        });
-
-        // 5.2 기존 교환 제안 상태 변경
-        await tx.exchangeOffer.update({
-          where: { id: offer.id },
-          data: {
-            status: "CANCELED",
-            updatedAt: new Date(),
-          },
-        });
-
-        // 5.3 기존 마켓 오퍼가 있으면 삭제
-        if (offer.marketOffer) {
-          await tx.marketOffer.delete({
-            where: { id: offer.marketOffer.id },
-          });
-        }
-
-        // 5.4 새 마켓 오퍼 생성
-        await tx.marketOffer.create({
-          data: {
-            type: "EXCHANGE",
-            ownerId: offer.offererId,
-            saleCardId: null,
-            exchangeOfferId: newOffer.id,
-          },
-        });
-      } catch (error) {
-        console.error(`교환 제안 마이그레이션 실패 (${offer.id}):`, error);
-        throw error; // 트랜잭션을 롤백시키기 위해 에러를 다시 던짐
-      }
+          status: "PENDING",
+        },
+        data: {
+          saleCardId: newSaleCard.id,
+          updatedAt: new Date(),
+        },
+      });
     }
 
     return newSaleCard;
@@ -187,69 +154,67 @@ const cancelMarketItem: CancelMarketItem = async (saleCardId, userId) => {
   // 판매 중인 카드 검증
   const saleCard = await validateSaleCard(saleCardId, userId);
 
+  // 판매 카드 정보 미리 저장
+  const photoCardInfo = {
+    grade: saleCard.photoCard.grade,
+    name: saleCard.photoCard.name,
+  };
+
   // 트랜잭션으로 모든 작업 처리
-  const canceledSaleCard = await prisma.$transaction(async (tx) => {
-    // 교환 제안 ID 목록 조회
-    const exchangeOffers = await tx.exchangeOffer.findMany({
-      where: {
-        saleCardId,
-        status: "PENDING",
-      },
-      select: {
-        id: true,
-      },
-    });
-
-    const exchangeOfferIds = exchangeOffers.map((offer) => offer.id);
-
-    // 교환 제안 관련 마켓 오퍼 삭제
-    if (exchangeOfferIds.length > 0) {
-      await tx.marketOffer.deleteMany({
+  const { canceledCard, pendingOffers } = await prisma.$transaction(
+    async (tx) => {
+      // 대기 중인 교환 제안 조회 및 취소
+      const pendingOffers = await tx.exchangeOffer.findMany({
         where: {
-          exchangeOfferId: {
-            in: exchangeOfferIds,
-          },
+          saleCardId,
+          status: "PENDING",
+        },
+        select: {
+          offererId: true,
         },
       });
+
+      // 대기 중인 교환 제안 취소
+      await tx.exchangeOffer.updateMany({
+        where: {
+          saleCardId,
+          status: "PENDING",
+        },
+        data: {
+          status: "FAILED",
+          updatedAt: new Date(),
+        },
+      });
+
+      // 판매 카드 취소 처리
+      const canceledCard = await tx.saleCard.update({
+        where: { id: saleCardId },
+        data: {
+          status: "CANCELED",
+          updatedAt: new Date(),
+        },
+        include: {
+          photoCard: true,
+          seller: { select: { nickname: true } },
+          userPhotoCard: true,
+        },
+      });
+
+      return { canceledCard, pendingOffers };
     }
+  );
 
-    // 대기 중인 교환 제안 취소
-    await tx.exchangeOffer.updateMany({
-      where: {
-        saleCardId,
-        status: "PENDING",
-      },
-      data: {
-        status: "CANCELED",
-        updatedAt: new Date(),
-      },
+  // 교환 제안자들에게 알림 보내기
+  for (const offer of pendingOffers) {
+    await createNotification({
+      userId: offer.offererId,
+      message: `[${photoCardInfo.name}] 판매가 취소되어 교환 제안이 취소되었습니다.`,
     });
-
-    // 판매 카드 취소 처리
-    const canceledCard = await tx.saleCard.update({
-      where: { id: saleCardId },
-      data: {
-        status: "CANCELED",
-        updatedAt: new Date(),
-      },
-      include: {
-        photoCard: true,
-        seller: { select: { nickname: true } },
-        userPhotoCard: true,
-      },
-    });
-
-    // 판매 관련 마켓 오퍼 삭제
-    await tx.marketOffer.deleteMany({
-      where: { saleCardId },
-    });
-
-    return canceledCard;
-  });
+  }
 
   // 응답 객체 생성 (취소된 카드는 remaining과 total이 다를 수 있음)
-  const response = createResponseObject(canceledSaleCard, userId);
-  response.total = canceledSaleCard.userPhotoCard.quantity;
+  const response = createResponseObject(canceledCard, userId);
+  response.total = canceledCard.userPhotoCard.quantity;
 
   return response;
 };
