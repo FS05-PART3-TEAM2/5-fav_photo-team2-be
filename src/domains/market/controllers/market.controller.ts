@@ -5,6 +5,8 @@ import marketService from "../services/market.service";
 const getMarketList: ApiSignature = async (req, res) => {
   const queries = req.query;
 
+  console.log("queries", queries);
+
   const response = await marketService.getMarketList(queries);
 
   res.status(200).send(response);
@@ -45,12 +47,22 @@ const createMarketItem: ApiSignature = async (req, res) => {
   res.status(201).send(response);
 };
 
+const purchaseMarketItem: ApiSignature = async (req, res) => {
+  const userId = req.user.id;
+  const body = req.body;
+
+  const response = await marketCuService.purchaseMarketItem(body, userId);
+
+  res.status(200).send(response);
+};
+
 const marketController = {
   getMarketList,
   getMarketMe,
   getMarketListCount,
   getMarketMeCount,
   createMarketItem,
+  purchaseMarketItem,
 };
 
 export default marketController;

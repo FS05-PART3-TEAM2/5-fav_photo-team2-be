@@ -13,7 +13,7 @@ export const MarketListQuerySchema = z.object({
   limit: z
     .string()
     .optional()
-    .transform((v) => (v ? parseInt(v, 15) : undefined)),
+    .transform((v) => (v ? parseInt(v, 10) : undefined)),
   cursor: z.object({ id: z.string(), createdAt: z.string() }).optional(),
 });
 
@@ -29,7 +29,7 @@ export const MarketMeQuerySchema = z.object({
   limit: z
     .string()
     .optional()
-    .transform((v) => (v ? parseInt(v, 15) : undefined)),
+    .transform((v) => (v ? parseInt(v, 10) : undefined)),
   cursor: z.object({ id: z.string(), createdAt: z.string() }).optional(),
 });
 
@@ -52,4 +52,9 @@ export const RequestMarketItemSchema = z.object({
       description: z.string(),
     })
     .optional(),
+});
+
+export const RequestPurchaseMarketItemSchema = z.object({
+  saleCardId: z.string(),
+  quantity: z.number().min(1),
 });
