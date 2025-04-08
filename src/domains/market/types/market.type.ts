@@ -4,6 +4,7 @@ import {
   MarketListQuerySchema,
   MarketMeQuerySchema,
   RequestMarketItemSchema,
+  RequestPurchaseMarketItemSchema,
 } from "../validators/market.validator";
 import { ExchangeOffer, SaleCard } from "@prisma/client";
 
@@ -11,12 +12,15 @@ export type MarketListQuery = z.infer<typeof MarketListQuerySchema>;
 export type MarketListCountQuery = z.infer<typeof MarketListCountQuerySchema>;
 export type MarketMeQuery = z.infer<typeof MarketMeQuerySchema>;
 export type MarketItemRequest = z.infer<typeof RequestMarketItemSchema>;
+export type PurchaseMarketItemRequest = z.infer<
+  typeof RequestPurchaseMarketItemSchema
+>;
 
 export type GetMarketList = (
   queries: MarketListQuery
 ) => Promise<MarketListResponse>;
 export type GetMarketMeList = (
-  queires: MarketMeQuery,
+  queries: MarketMeQuery,
   user: { id: string; role: string }
 ) => Promise<MarketMeListResponse>;
 export type GetMarketListCount = (
@@ -30,6 +34,10 @@ export type CreateMarketItem = (
   body: MarketItemRequest,
   userId: string
 ) => Promise<MarketItemResponse>;
+export type PurchaseMarketItem = (
+  body: PurchaseMarketItemRequest,
+  userId: string
+) => Promise<{ message: string }>;
 
 export interface MarketListCountResponse {
   grade: string;
