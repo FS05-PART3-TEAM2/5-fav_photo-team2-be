@@ -28,11 +28,16 @@ export const getRemainingTime = async (
   const diffSec = (now - lastDrawTime) / 1000;
   const remaining = Math.max(0, 3600 - diffSec);
   const canDraw = remaining <= 0;
+  const lastPickTime = new Date(lastDraw.createdAt);
 
+  const koreaTime = lastPickTime.toLocaleString("ko-KR", {
+    timeZone: "Asia/Seoul",
+  });
   // 쿨타임이 지나면 true, 아니면 false
   return {
     canDraw,
     remainingSeconds: remaining,
+    lastDrawTime: koreaTime,
     message: canDraw
       ? "뽑기 가능"
       : `아직 ${Math.ceil(remaining / 60)}분 남았습니다.`,
