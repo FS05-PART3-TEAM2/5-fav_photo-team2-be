@@ -30,7 +30,7 @@ export type MarketItemResponse = {
   total: number;
   createdAt: string;
   updatedAt: string;
-  owner: {
+  creator: {
     id: string;
     nickname: string;
   };
