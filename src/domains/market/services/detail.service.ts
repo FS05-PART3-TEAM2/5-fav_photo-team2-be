@@ -90,7 +90,7 @@ export const getBasicDetail = async (
     where: {
       saleCardId: saleCard.id,
       transactionType: {
-        in: ["PURCHASE", "EXCHANGE"],
+        in: ["PURCHASE", "EXCHANGE", "SALE"],
       },
     },
   });
