@@ -12,4 +12,6 @@ model PhotoCard {
   saleCard  SaleCard[]
   creator   User       @relation(fields: [creatorId], references: [id])
   creatorId String
+
+  @@index([grade, genre])
 }

@@ -8,5 +8,6 @@ model UserPhotoCard {
 
   saleCard SaleCard[]
 
+  @@unique([ownerId, photoCardId]) // ownerId_photoCardId
   @@index([ownerId])
 }
