@@ -56,21 +56,13 @@ export const testOpenBox = async (
 ): Promise<void> => {
   const userBox = req.body.boxNumber;
   const userId = req.user.id;
-  const { canDraw, lastDrawTime, remainingSeconds } =
-    await TestGetRemainingTime(userId);
+  const { lastDrawTime } = await TestGetRemainingTime(userId);
 
   console.log("lastDrawTime:", lastDrawTime);
 
   // 유효성 검사
   if (![1, 2, 3].includes(userBox)) {
     res.status(400).json({ error: "잘못된 박스 번호입니다." });
-    return;
-  }
-
-  if (!canDraw) {
-    res
-      .status(400)
-      .json({ error: `박스 오픈 까지 남은 시간 ${remainingSeconds}초` });
     return;
   }
 
