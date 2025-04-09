@@ -69,13 +69,21 @@ const updateMarketItem: UpdateMarketItem = async (saleCardId, body, userId) => {
   if (quantity !== undefined && saleCard.userPhotoCard.quantity < quantity)
     throw new CustomError("Not enough quantity", 400);
 
+  // 판매 카드 정보 미리 저장
+  const photoCardInfo = {
+    grade: saleCard.photoCard.grade,
+    name: saleCard.photoCard.name,
+  };
+
   // 기존 교환 제안 조회
   const pendingOffers = await prisma.exchangeOffer.findMany({
     where: {
       saleCardId,
       status: "PENDING",
     },
-    include: {
+    select: {
+      id: true,
+      offererId: true,
       marketOffer: true,
     },
   });
@@ -145,6 +153,14 @@ const updateMarketItem: UpdateMarketItem = async (saleCardId, body, userId) => {
 
     return newSaleCard;
   });
+
+  // 교환 제안자들에게 알림 보내기
+  for (const offer of pendingOffers) {
+    await createNotification({
+      userId: offer.offererId,
+      message: `[${photoCardInfo.name}] 판매글이 수정되었습니다. 수정된 판매글로 교환 제안이 이전되었습니다.`,
+    });
+  }
 
   return createResponseObject(result, userId);
 };
