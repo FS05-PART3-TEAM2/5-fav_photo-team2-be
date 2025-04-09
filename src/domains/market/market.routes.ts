@@ -15,6 +15,7 @@ import {
 import {
   failOfferController,
   acceptOfferController,
+  createExchangeOffer,
 } from "./controllers/exchange.controller";
 import { authenticate } from "../../middlewares/auth.middleware";
 import {
@@ -76,5 +77,6 @@ router.post(
 // Exchange routes
 router.patch("/exchange/:id/fail", authenticate, failOfferController);
 router.patch("/exchange/:id/accept", authenticate, acceptOfferController);
+router.post("/exchange", authenticate, requestHandler(createExchangeOffer));
 
 export default router;

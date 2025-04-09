@@ -1,6 +1,17 @@
 import { Request, Response } from "express";
 import { failOffer, acceptOffer } from "../services/exchange.service";
 import { CustomError } from "../../../utils/errors";
+import { ApiSignature } from "../../../types";
+import exchangeService from "../services/exchange.service";
+
+export const createExchangeOffer: ApiSignature = async (req, res) => {
+  const userId = req.user.id;
+  const body = req.body;
+
+  const response = await exchangeService.createExchangeOffer(body, userId);
+
+  res.status(200).send(response);
+};
 
 export const failOfferController = async (
   req: Request,
