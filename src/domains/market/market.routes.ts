@@ -17,6 +17,11 @@ import {
   acceptOfferController,
 } from "./controllers/exchange.controller";
 import { authenticate } from "../../middlewares/auth.middleware";
+import {
+  cancelMarketItemCtrl,
+  updateMarketItemCtrl,
+} from "./controllers/market.update.controller";
+import { UpdateMarketItemSchema } from "./validators/market.update.validators";
 
 const router = Router();
 
@@ -48,6 +53,15 @@ router.post(
   validateAll({ body: RequestMarketItemSchema }),
   requestHandler(marketController.createMarketItem)
 );
+
+router.patch(
+  "/:id",
+  authenticate,
+  validateAll({ body: UpdateMarketItemSchema }),
+  requestHandler(updateMarketItemCtrl)
+);
+
+router.patch("/:id/cancel", authenticate, requestHandler(cancelMarketItemCtrl));
 
 router.get("/:id/detail", authenticate, requestHandler(getBasicDetailCtrl));
 
