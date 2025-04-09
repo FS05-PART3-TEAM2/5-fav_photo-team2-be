@@ -302,6 +302,9 @@ const getMarketMe: GetMarketMeList = async (queries, user) => {
     select: {
       type: true,
       saleCard: {
+        where: {
+          status: { in: ["ON_SALE", "SOLD_OUT"] },
+        },
         select: {
           photoCard: {
             select: {
@@ -313,6 +316,9 @@ const getMarketMe: GetMarketMeList = async (queries, user) => {
         },
       },
       exchangeOffer: {
+        where: {
+          status: "PENDING",
+        },
         select: {
           saleCard: {
             select: {
