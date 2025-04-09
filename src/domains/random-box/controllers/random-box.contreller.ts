@@ -56,9 +56,6 @@ export const testOpenBox = async (
 ): Promise<void> => {
   const userBox = req.body.boxNumber;
   const userId = req.user.id;
-  const { lastDrawTime } = await TestGetRemainingTime(userId);
-
-  console.log("lastDrawTime:", lastDrawTime);
 
   // 유효성 검사
   if (![1, 2, 3].includes(userBox)) {
