@@ -15,7 +15,7 @@ export const createExchangeOffer: CreateExchangeOffer = async (
   body,
   userId
 ) => {
-  const { saleCardId, content } = body;
+  const { saleCardId, offeredUserCardId, content } = body;
   const offererId = userId; // 제시자 ID
 
   // 교환 제시자 닉네임 조회
@@ -28,11 +28,35 @@ export const createExchangeOffer: CreateExchangeOffer = async (
   }
   const offererNickname = offerer.nickname; // 교환 제시자 닉네임
 
+  // 제안카드 조회
+  const offeredUserCard = await prisma.userPhotoCard.findUnique({
+    where: { id: offeredUserCardId },
+    select: { photoCardId: true, quantity: true },
+  });
+  if (!offeredUserCard) {
+    throw new CustomError("제안한 카드를 찾을 수 없습니다.", 404);
+  }
+  const { photoCardId: offeredCardId, quantity } = offeredUserCard; // 제안카드 ID, 수량
+  if (quantity < 1) {
+    throw new CustomError("제안한 카드의 수량이 부족합니다.", 409);
+  }
+  // 제안카드의 포토카드 정보 조회
+  const offeredPhotoCard = await prisma.photoCard.findUnique({
+    where: { id: offeredCardId },
+    select: { name: true, grade: true },
+  });
+  if (!offeredPhotoCard) {
+    throw new CustomError(
+      "제안한 카드의 포토카드 정보를 찾을 수 없습니다.",
+      404
+    );
+  }
+  const { name: offeredCardName, grade: offeredCardGrade } = offeredPhotoCard; // 제안카드의 포토카드 정보
+
   // 판매카드 조회
   const saleCard = await prisma.saleCard.findUnique({
     where: { id: saleCardId },
     select: {
-      photoCardId: true,
       sellerId: true,
       photoCard: {
         select: {
@@ -46,46 +70,27 @@ export const createExchangeOffer: CreateExchangeOffer = async (
   if (!saleCard) {
     throw new CustomError("판매카드를 찾을 수 없습니다.", 404);
   }
-  const { photoCardId, sellerId, photoCard } = saleCard; // 판매카드 ID, 판매자 ID, 포토카드
-  const { name: cardName, grade } = photoCard; // 포토카드 이름, 등급
-
-  // 유저 소유카드 조회
-  const userPhotoCard = await prisma.userPhotoCard.findUnique({
-    where: {
-      ownerId_photoCardId: {
-        ownerId: offererId,
-        photoCardId,
-      },
-    },
-    select: {
-      id: true,
-      quantity: true,
-    },
-  });
-  // 유저 소유카드가 없거나 수량이 부족한 경우
-  if (!userPhotoCard) {
-    throw new CustomError("소유한 카드가 없습니다.", 404);
-  }
-  if (userPhotoCard.quantity < 1) {
-    throw new CustomError("소유한 카드의 수량이 부족합니다.", 409);
-  }
-  const userPhotoCardId = userPhotoCard.id; // 제시자 소유카드 ID
+  const { sellerId, photoCard } = saleCard; // 판매자 ID, 판매 포토카드
+  const { name: saleCardName, grade: saleCardGrade } = photoCard; // 판매카드의 포토카드 정보
 
   // 교환 제안 생성
   const exchangeOffer = await prisma.exchangeOffer.create({
     data: {
       saleCardId,
       offererId,
-      userPhotoCardId,
+      userPhotoCardId: offeredUserCardId,
       status: "PENDING",
       content,
     },
   });
 
   // 알림 생성
-  const photoCardInfo = `[${grade}|${cardName}]`; // 포토카드 정보
-  const offererMessage = `${photoCardInfo}의 교환 제안이 등록되었습니다.`; // 제안자에게 알림
-  const sellerMessage = `${offererNickname}님이 ${photoCardInfo}의 교환을 제안했습니다.`; // 판매자에게 알림
+  const salePhotoCardInfo = `[${saleCardGrade}|${saleCardName}]`; // 판매카드 정보
+  const offeredPhotoCardInfo = `[${offeredCardGrade}|${offeredCardName}]`; // 제안카드 정보
+
+  const offererMessage = `${salePhotoCardInfo}에 대한 교환제안이 등록되었습니다.`; // 제안자에게 알림
+  const sellerMessage = `${offererNickname}님이 ${salePhotoCardInfo}에 대해 ${offeredPhotoCardInfo} 카드로 교환을 제안했습니다.`;
+
   await createNotification({ userId: offererId, message: offererMessage }); // 제안자 알림
   await createNotification({ userId: sellerId, message: sellerMessage }); // 판매자 알림
 
