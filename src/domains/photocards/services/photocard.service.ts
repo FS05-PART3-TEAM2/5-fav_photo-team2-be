@@ -9,7 +9,6 @@ import {
   CreatePhotocardRequest,
 } from "../types/photocard.type";
 import { PHOTOCARD_GENRES } from "../constants/filter.constant";
-import { uploadImage } from "../../../config/cloudinary";
 
 const prisma = new PrismaClient();
 
@@ -327,19 +326,16 @@ const getFilterInfo = async (userId: string): Promise<FilterPhotoCard> => {
 /**
  * 포토카드 생성 서비스
  * @param data 포토카드 생성 데이터
- * @param imageBuffer 이미지 파일 버퍼
+ * @param imageUrl 이미지 URL
  * @param userId 사용자 ID
  * @returns 생성된 포토카드 정보
  */
 const createPhotocard = async (
   data: CreatePhotocardRequest,
-  imageBuffer: Buffer,
+  imageUrl: string,
   userId: string
 ) => {
   try {
-    // Cloudinary에 이미지 업로드
-    const imageUrl = await uploadImage(imageBuffer);
-
     // 포토카드 생성
     const photocard = await prisma.photoCard.create({
       data: {
@@ -353,7 +349,7 @@ const createPhotocard = async (
       },
     });
 
-    // 포토카드 생성 후 자동으로 사용자의 소유 카드로 등록 (수량 1개)
+    // 포토카드 생성 후 자동으로 사용자의 소유 카드로 등록
     await prisma.userPhotoCard.create({
       data: {
         photoCardId: photocard.id,
@@ -363,28 +359,26 @@ const createPhotocard = async (
     });
 
     // 등급에 따른 발행 장수 설정
-    let totalMinted;
+    let amount;
     switch (data.grade) {
       case "LEGENDARY":
-        totalMinted = 1;
+        amount = 1;
         break;
       case "SUPER_RARE":
-        totalMinted = 3;
+        amount = 3;
         break;
       case "RARE":
-        totalMinted = 8;
+        amount = 8;
         break;
       case "COMMON":
-        totalMinted = 20;
+        amount = 20;
         break;
-      default:
-        totalMinted = 1;
     }
 
-    // 응답에 totalMinted 추가
+    // 응답에 amount 추가
     return {
       ...photocard,
-      totalMinted,
+      amount,
     };
   } catch (error) {
     console.error("포토카드 생성 중 오류 발생:", error);

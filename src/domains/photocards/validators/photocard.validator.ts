@@ -81,6 +81,7 @@ export const CreatePhotocardSchema = z.object({
     z.number().int().min(0, { message: "가격은 0 이상의 정수여야 합니다." })
   ),
   description: z.string().min(1, { message: "설명은 필수입니다." }),
+  imageUrl: z.string().url({ message: "유효한 이미지 URL을 입력해주세요." }),
 });
 
 // 응답 타입

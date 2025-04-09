@@ -102,6 +102,7 @@ export interface CreatePhotocardRequest {
   grade: (typeof PHOTOCARD_GRADES)[number];
   price: number;
   description: string;
+  imageUrl: string;
 }
 
 /**
@@ -115,7 +116,7 @@ export interface CreatePhotocardResponse {
   price: number;
   description: string;
   imageUrl: string;
-  totalMinted: number;
+  amount: number;
   creatorId: string;
   createdAt: Date;
   updatedAt: Date;
