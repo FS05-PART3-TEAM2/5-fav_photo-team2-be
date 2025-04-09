@@ -59,6 +59,11 @@ const getMarketList: GetMarketList = async (queries) => {
             ],
           },
         },
+        {
+          status: {
+            in: ["ON_SALE", "SOLD_OUT"],
+          },
+        },
       ],
     },
     take: limit,
@@ -204,7 +209,9 @@ const getMarketMe: GetMarketMeList = async (queries, user) => {
         {
           type: "SALE",
           saleCard: {
-            status: status || undefined, // status가 없으면 undefined로 설정
+            status: status || {
+              in: ["ON_SALE", "SOLD_OUT"],
+            }, // status가 없으면 undefined로 설정
             photoCard: {
               AND: [
                 keyword
@@ -224,7 +231,9 @@ const getMarketMe: GetMarketMeList = async (queries, user) => {
         {
           type: "EXCHANGE",
           exchangeOffer: {
-            status: status || undefined, // status가 없으면 undefined로 설정
+            status: status || {
+              in: ["PENDING"],
+            }, // status가 없으면 undefined로 설정
             saleCard: {
               photoCard: {
                 AND: [
@@ -293,6 +302,9 @@ const getMarketMe: GetMarketMeList = async (queries, user) => {
     select: {
       type: true,
       saleCard: {
+        where: {
+          status: { in: ["ON_SALE", "SOLD_OUT"] },
+        },
         select: {
           photoCard: {
             select: {
@@ -304,6 +316,9 @@ const getMarketMe: GetMarketMeList = async (queries, user) => {
         },
       },
       exchangeOffer: {
+        where: {
+          status: "PENDING",
+        },
         select: {
           saleCard: {
             select: {
