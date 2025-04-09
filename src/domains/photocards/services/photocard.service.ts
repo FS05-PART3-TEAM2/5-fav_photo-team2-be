@@ -6,8 +6,10 @@ import {
   PhotocardInfo,
   FilterPhotoCard,
   Cursor,
+  CreatePhotocardRequest,
 } from "../types/photocard.type";
 import { PHOTOCARD_GENRES } from "../constants/filter.constant";
+import { uploadImage } from "../../../config/cloudinary";
 
 const prisma = new PrismaClient();
 
@@ -191,8 +193,12 @@ const buildWhereClause = async ({
   }
 
   // 장르 필터 추가 - 값이 제공되고 "ALL"이 아닌 경우에만 필터링
-  if (genre && genre !== "ALL" && PHOTOCARD_GENRES.includes(genre)) {
-    photoCardWhereClause.genre = genre;
+  if (genre && genre !== "ALL") {
+    // 유효한 장르인지 확인
+    const validGenres = [...PHOTOCARD_GENRES] as string[];
+    if (validGenres.includes(genre)) {
+      photoCardWhereClause.genre = genre;
+    }
   }
 
   return photoCardWhereClause;
@@ -318,12 +324,81 @@ const getFilterInfo = async (userId: string): Promise<FilterPhotoCard> => {
   };
 };
 
+/**
+ * 포토카드 생성 서비스
+ * @param data 포토카드 생성 데이터
+ * @param imageBuffer 이미지 파일 버퍼
+ * @param userId 사용자 ID
+ * @returns 생성된 포토카드 정보
+ */
+const createPhotocard = async (
+  data: CreatePhotocardRequest,
+  imageBuffer: Buffer,
+  userId: string
+) => {
+  try {
+    // Cloudinary에 이미지 업로드
+    const imageUrl = await uploadImage(imageBuffer);
+
+    // 포토카드 생성
+    const photocard = await prisma.photoCard.create({
+      data: {
+        name: data.name,
+        genre: data.genre,
+        grade: data.grade,
+        price: data.price,
+        description: data.description,
+        imageUrl: imageUrl,
+        creatorId: userId,
+      },
+    });
+
+    // 포토카드 생성 후 자동으로 사용자의 소유 카드로 등록 (수량 1개)
+    await prisma.userPhotoCard.create({
+      data: {
+        photoCardId: photocard.id,
+        ownerId: userId,
+        quantity: 1,
+      },
+    });
+
+    // 등급에 따른 발행 장수 설정
+    let totalMinted;
+    switch (data.grade) {
+      case "LEGENDARY":
+        totalMinted = 1;
+        break;
+      case "SUPER_RARE":
+        totalMinted = 3;
+        break;
+      case "RARE":
+        totalMinted = 8;
+        break;
+      case "COMMON":
+        totalMinted = 20;
+        break;
+      default:
+        totalMinted = 1;
+    }
+
+    // 응답에 totalMinted 추가
+    return {
+      ...photocard,
+      totalMinted,
+    };
+  } catch (error) {
+    console.error("포토카드 생성 중 오류 발생:", error);
+    throw new Error("포토카드 생성에 실패했습니다.");
+  }
+};
+
 // 서비스 함수 내보내기
 const photocardService = {
   getMyPhotocards,
   getGradeCounts,
   getFilterInfo,
   getMyPhotocardsCount,
+  createPhotocard,
 };
 
 export default photocardService;

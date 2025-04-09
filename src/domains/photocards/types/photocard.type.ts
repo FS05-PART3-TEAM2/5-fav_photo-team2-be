@@ -1,5 +1,12 @@
 import { z } from "zod";
-import { PhotocardsQueryWithTransform } from "../validators/photocard.validator";
+import {
+  PhotocardsQueryWithTransform,
+  CreatePhotocardSchema,
+} from "../validators/photocard.validator";
+import {
+  PHOTOCARD_GENRES,
+  PHOTOCARD_GRADES,
+} from "../constants/filter.constant";
 
 /**
  * 사용자의 포토카드 조회 응답 인터페이스
@@ -85,3 +92,31 @@ export type PhotocardDto = {
   updatedAt: Date;
   userId: string;
 };
+
+/**
+ * 포토카드 생성 요청 인터페이스
+ */
+export interface CreatePhotocardRequest {
+  name: string;
+  genre: (typeof PHOTOCARD_GENRES)[number];
+  grade: (typeof PHOTOCARD_GRADES)[number];
+  price: number;
+  description: string;
+}
+
+/**
+ * 포토카드 생성 응답 인터페이스
+ */
+export interface CreatePhotocardResponse {
+  id: string;
+  name: string;
+  genre: string;
+  grade: string;
+  price: number;
+  description: string;
+  imageUrl: string;
+  totalMinted: number;
+  creatorId: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
