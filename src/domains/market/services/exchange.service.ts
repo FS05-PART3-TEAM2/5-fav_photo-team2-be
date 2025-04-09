@@ -18,6 +18,32 @@ export const createExchangeOffer: CreateExchangeOffer = async (
   const { saleCardId, offeredUserCardId, content } = body;
   const offererId = userId; // 제시자 ID
 
+  // 판매카드 조회
+  const saleCard = await prisma.saleCard.findUnique({
+    where: { id: saleCardId },
+    select: {
+      sellerId: true,
+      photoCard: {
+        select: {
+          name: true,
+          grade: true,
+        },
+      },
+    },
+  });
+  // 판매카드가 없거나 판매중이 아닌 경우
+  if (!saleCard) {
+    throw new CustomError("판매카드를 찾을 수 없습니다.", 404);
+  }
+  const { sellerId, photoCard } = saleCard; // 판매자 ID, 판매 포토카드
+  const { name: saleCardName, grade: saleCardGrade } = photoCard; // 판매카드의 포토카드 정보
+
+  // 판매자가 제안자와 동일한 경우 에러 처리
+  const isSelfOffer = sellerId === offererId;
+  if (isSelfOffer) {
+    throw new CustomError("자신의 카드에 교환 제안을 할 수 없습니다.", 403);
+  }
+
   // 교환 제시자 닉네임 조회
   const offerer = await prisma.user.findUnique({
     where: { id: offererId },
@@ -52,26 +78,6 @@ export const createExchangeOffer: CreateExchangeOffer = async (
     );
   }
   const { name: offeredCardName, grade: offeredCardGrade } = offeredPhotoCard; // 제안카드의 포토카드 정보
-
-  // 판매카드 조회
-  const saleCard = await prisma.saleCard.findUnique({
-    where: { id: saleCardId },
-    select: {
-      sellerId: true,
-      photoCard: {
-        select: {
-          name: true,
-          grade: true,
-        },
-      },
-    },
-  });
-  // 판매카드가 없거나 판매중이 아닌 경우
-  if (!saleCard) {
-    throw new CustomError("판매카드를 찾을 수 없습니다.", 404);
-  }
-  const { sellerId, photoCard } = saleCard; // 판매자 ID, 판매 포토카드
-  const { name: saleCardName, grade: saleCardGrade } = photoCard; // 판매카드의 포토카드 정보
 
   // 교환 제안 생성
   const exchangeOffer = await prisma.exchangeOffer.create({
