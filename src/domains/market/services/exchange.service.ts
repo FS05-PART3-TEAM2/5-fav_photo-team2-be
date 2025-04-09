@@ -2,8 +2,98 @@ import { PrismaClient, Prisma } from "@prisma/client";
 import { ExchangeOffer } from "../interfaces/exchange.interface";
 import { CustomError } from "../../../utils/errors";
 import { createNotification } from "../../notification/services/notificationService";
+import { CreateExchangeOffer } from "../types/exchange.type";
 
 const prisma = new PrismaClient();
+
+/**
+ * 교환제안 생성
+ * @param body 교환 제안 정보
+ * @param userId 현재 사용자 ID
+ */
+export const createExchangeOffer: CreateExchangeOffer = async (
+  body,
+  userId
+) => {
+  const { saleCardId, content } = body;
+  const offererId = userId; // 소비자 ID
+
+  // 교환 제시자 닉네임 조회
+  const offerer = await prisma.user.findUnique({
+    where: { id: offererId },
+    select: { nickname: true },
+  });
+  if (!offerer) {
+    throw new CustomError("교환 제시자 정보를 찾을 수 없습니다.", 404);
+  }
+  const offererNickname = offerer.nickname;
+
+  // 판매카드 조회
+  const saleCard = await prisma.saleCard.findUnique({
+    where: { id: saleCardId },
+    select: {
+      photoCardId: true,
+      sellerId: true,
+      photoCard: {
+        select: {
+          name: true,
+          grade: true,
+        },
+      },
+    },
+  });
+  // 판매카드가 없거나 판매중이 아닌 경우
+  if (!saleCard) {
+    throw new CustomError("판매카드를 찾을 수 없습니다.", 404);
+  }
+  const { photoCardId, sellerId, photoCard } = saleCard;
+  const { name: cardName, grade } = photoCard;
+
+  // 유저 소유카드 조회
+  const userPhotoCard = await prisma.userPhotoCard.findUnique({
+    where: {
+      ownerId_photoCardId: {
+        ownerId: offererId,
+        photoCardId,
+      },
+    },
+    select: {
+      id: true,
+      quantity: true,
+    },
+  });
+  // 유저 소유카드가 없거나 수량이 부족한 경우
+  if (!userPhotoCard) {
+    throw new CustomError("소유한 카드가 없습니다.", 404);
+  }
+  if (userPhotoCard.quantity < 1) {
+    throw new CustomError("소유한 카드의 수량이 부족합니다.", 400);
+  }
+  const userPhotoCardId = userPhotoCard.id; // 소유카드 ID
+
+  // 교환 제안 생성
+  const exchangeOffer = await prisma.exchangeOffer.create({
+    data: {
+      saleCardId,
+      offererId,
+      userPhotoCardId,
+      status: "PENDING",
+      content,
+    },
+  });
+
+  // 알림 생성
+  const photoCardInfo = `[${grade}|${cardName}]`;
+  const offererMessage = `${photoCardInfo}의 교환 제안이 등록되었습니다.`;
+  const sellerMessage = `${offererNickname}님이 ${photoCardInfo}의 교환을 제안했습니다.`;
+  await createNotification({ userId: offererId, message: offererMessage });
+  await createNotification({ userId: sellerId, message: sellerMessage });
+
+  return {
+    message: "포토카드 제안이 완료되었습니다.",
+    exchangeOffer,
+  };
+};
 
 /**
  * 교환제안 취소/거절
@@ -320,3 +410,11 @@ export const acceptOffer = async (
     return acceptedOffer as unknown as ExchangeOffer;
   });
 };
+
+const exchangeService = {
+  createExchangeOffer,
+  failOffer,
+  acceptOffer,
+};
+
+export default exchangeService;
