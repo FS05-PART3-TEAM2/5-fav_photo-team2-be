@@ -16,7 +16,7 @@ export const createExchangeOffer: CreateExchangeOffer = async (
   userId
 ) => {
   const { saleCardId, content } = body;
-  const offererId = userId; // 소비자 ID
+  const offererId = userId; // 제시자 ID
 
   // 교환 제시자 닉네임 조회
   const offerer = await prisma.user.findUnique({
@@ -26,7 +26,7 @@ export const createExchangeOffer: CreateExchangeOffer = async (
   if (!offerer) {
     throw new CustomError("교환 제시자 정보를 찾을 수 없습니다.", 404);
   }
-  const offererNickname = offerer.nickname;
+  const offererNickname = offerer.nickname; // 교환 제시자 닉네임
 
   // 판매카드 조회
   const saleCard = await prisma.saleCard.findUnique({
@@ -46,8 +46,8 @@ export const createExchangeOffer: CreateExchangeOffer = async (
   if (!saleCard) {
     throw new CustomError("판매카드를 찾을 수 없습니다.", 404);
   }
-  const { photoCardId, sellerId, photoCard } = saleCard;
-  const { name: cardName, grade } = photoCard;
+  const { photoCardId, sellerId, photoCard } = saleCard; // 판매카드 ID, 판매자 ID, 포토카드
+  const { name: cardName, grade } = photoCard; // 포토카드 이름, 등급
 
   // 유저 소유카드 조회
   const userPhotoCard = await prisma.userPhotoCard.findUnique({
@@ -67,9 +67,9 @@ export const createExchangeOffer: CreateExchangeOffer = async (
     throw new CustomError("소유한 카드가 없습니다.", 404);
   }
   if (userPhotoCard.quantity < 1) {
-    throw new CustomError("소유한 카드의 수량이 부족합니다.", 400);
+    throw new CustomError("소유한 카드의 수량이 부족합니다.", 409);
   }
-  const userPhotoCardId = userPhotoCard.id; // 소유카드 ID
+  const userPhotoCardId = userPhotoCard.id; // 제시자 소유카드 ID
 
   // 교환 제안 생성
   const exchangeOffer = await prisma.exchangeOffer.create({
@@ -83,11 +83,11 @@ export const createExchangeOffer: CreateExchangeOffer = async (
   });
 
   // 알림 생성
-  const photoCardInfo = `[${grade}|${cardName}]`;
-  const offererMessage = `${photoCardInfo}의 교환 제안이 등록되었습니다.`;
-  const sellerMessage = `${offererNickname}님이 ${photoCardInfo}의 교환을 제안했습니다.`;
-  await createNotification({ userId: offererId, message: offererMessage });
-  await createNotification({ userId: sellerId, message: sellerMessage });
+  const photoCardInfo = `[${grade}|${cardName}]`; // 포토카드 정보
+  const offererMessage = `${photoCardInfo}의 교환 제안이 등록되었습니다.`; // 제안자에게 알림
+  const sellerMessage = `${offererNickname}님이 ${photoCardInfo}의 교환을 제안했습니다.`; // 판매자에게 알림
+  await createNotification({ userId: offererId, message: offererMessage }); // 제안자 알림
+  await createNotification({ userId: sellerId, message: sellerMessage }); // 판매자 알림
 
   return {
     message: "포토카드 제안이 완료되었습니다.",
