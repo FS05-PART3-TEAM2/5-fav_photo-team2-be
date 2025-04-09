@@ -26,8 +26,8 @@ const createResponseObject = (
     createdAt: saleCard.createdAt.toISOString(),
     updatedAt: saleCard.updatedAt.toISOString(),
     creator: {
-      id: userId,
-      nickname: saleCard.seller.nickname,
+      id: saleCard.photoCard.creator?.id || saleCard.photoCard.creatorId,
+      nickname: saleCard.photoCard.creator?.nickname || "Unknown Creator",
     },
     exchangeOffer: {
       description: saleCard.exchangeDescription,
@@ -42,7 +42,11 @@ const validateSaleCard = async (saleCardId: string, userId: string) => {
   const saleCard = await prisma.saleCard.findUnique({
     where: { id: saleCardId },
     include: {
-      photoCard: true,
+      photoCard: {
+        include: {
+          creator: true,
+        },
+      },
       seller: { select: { nickname: true } },
       userPhotoCard: true,
     },
@@ -106,7 +110,11 @@ const updateMarketItem: UpdateMarketItem = async (saleCardId, body, userId) => {
         userPhotoCardId: saleCard.userPhotoCardId,
       },
       include: {
-        photoCard: true,
+        photoCard: {
+          include: {
+            creator: true,
+          },
+        },
         seller: { select: { nickname: true } },
         userPhotoCard: true,
       },
@@ -210,7 +218,11 @@ const cancelMarketItem: CancelMarketItem = async (saleCardId, userId) => {
           updatedAt: new Date(),
         },
         include: {
-          photoCard: true,
+          photoCard: {
+            include: {
+              creator: true,
+            },
+          },
           seller: { select: { nickname: true } },
           userPhotoCard: true,
         },
