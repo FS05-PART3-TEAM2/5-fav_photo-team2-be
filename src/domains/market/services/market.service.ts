@@ -59,6 +59,11 @@ const getMarketList: GetMarketList = async (queries) => {
             ],
           },
         },
+        {
+          status: {
+            in: ["ON_SALE", "SOLD_OUT"],
+          },
+        },
       ],
     },
     take: limit,
