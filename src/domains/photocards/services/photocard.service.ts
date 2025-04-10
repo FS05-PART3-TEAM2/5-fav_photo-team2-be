@@ -473,17 +473,8 @@ const createPhotocard = async (
       },
     });
 
-    // 포토카드 생성 후 자동으로 사용자의 소유 카드로 등록
-    await prisma.userPhotoCard.create({
-      data: {
-        photoCardId: photocard.id,
-        ownerId: userId,
-        quantity: 1,
-      },
-    });
-
     // 등급에 따른 발행 장수 설정
-    let amount;
+    let amount = 1; // 기본값 1로 설정
     switch (data.grade) {
       case "LEGENDARY":
         amount = 1;
@@ -498,6 +489,15 @@ const createPhotocard = async (
         amount = 20;
         break;
     }
+
+    // 포토카드 생성 후 자동으로 사용자의 소유 카드로 등록 (수량은 등급에 따라 설정)
+    await prisma.userPhotoCard.create({
+      data: {
+        photoCardId: photocard.id,
+        ownerId: userId,
+        quantity: amount,
+      },
+    });
 
     // 응답에 amount 추가
     return {
