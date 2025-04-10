@@ -184,7 +184,10 @@ const getMarketMe: GetMarketMeList = async (queries, user) => {
       saleCard: { include: { photoCard: { include: { creator: true } } } },
       exchangeOffer: {
         include: {
-          saleCard: { include: { photoCard: { include: { creator: true } } } },
+          saleCard: true,
+          userPhotoCard: {
+            include: { photoCard: { include: { creator: true } } },
+          },
         },
       },
     },
@@ -285,6 +288,8 @@ const getMarketMe: GetMarketMeList = async (queries, user) => {
   });
 
   // console.log(JSON.stringify(enrichedOffers, null, 2));
+
+  console.log(enrichedOffers);
 
   const data = enrichedOffers.map((card) => toMarketMeResponse(card));
 
