@@ -86,31 +86,32 @@ export const getBasicDetail = async (
         offererId: saleCard.sellerId, // 판매자가 제안한 교환 제안
         status: "PENDING", // 대기 중인 교환 제안만 고려
       },
-      select: {
-        userPhotoCardId: true, // 교환 제안에 사용된 userPhotoCard ID만 선택
+      include: {
+        userPhotoCard: true, // 교환 제안에 사용된 userPhotoCard 정보 포함
       },
     });
 
-    if (exchangeOffers.length > 0) {
-      // 2. 교환 제안에 포함된 userPhotoCard 중 현재 포토카드와 같은 종류만 필터링
-      const exchangeUserPhotoCards = await prisma.userPhotoCard.findMany({
-        where: {
-          id: {
-            in: exchangeOffers.map((offer) => offer.userPhotoCardId),
-          },
-          photoCardId: saleCard.photoCardId, // 동일한 포토카드만 필터링
-        },
-      });
+    let exchangeOfferCount = 0;
 
-      // 교환 제시한 포토카드 수량 (동일한 포토카드 종류인 경우만)
-      const exchangeOfferCount = exchangeUserPhotoCards.length;
+    if (exchangeOffers.length > 0) {
+      // 교환 제안에 사용된 것 중 현재 포토카드와 동일한 종류만 필터링하고 수량 합산
+      for (const offer of exchangeOffers) {
+        // userPhotoCard가 존재하고 현재 포토카드 타입과 같은 경우에만 카운트
+        if (
+          offer.userPhotoCard &&
+          offer.userPhotoCard.photoCardId === saleCard.photoCardId
+        ) {
+          // 각 교환 제안은 1장씩 사용하므로 1을 더함
+          exchangeOfferCount += 1;
+        }
+      }
 
       // 총 보유량에서 교환 제시한 수량만 제외 (판매 등록 수량은 제외하지 않음)
       totalOwnAmount -= exchangeOfferCount;
     }
 
     console.log(
-      `판매자 ${saleCard.sellerId}의 포토카드 ${saleCard.photoCardId} 총 소유량: ${totalOwnAmount} (교환 제시 수량 제외)`
+      `판매자 ${saleCard.sellerId}의 포토카드 ${saleCard.photoCardId} 총 소유량: ${totalOwnAmount} (교환 제시 수량 ${exchangeOfferCount}장 제외)`
     );
   } catch (error) {
     console.error("판매자의 포토카드 소유 정보 조회 중 오류:", error);
