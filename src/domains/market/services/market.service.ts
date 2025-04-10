@@ -289,7 +289,7 @@ const getMarketMe: GetMarketMeList = async (queries, user) => {
 
   // console.log(JSON.stringify(enrichedOffers, null, 2));
 
-  console.log(enrichedOffers);
+  // console.log(enrichedOffers);
 
   const data = enrichedOffers.map((card) => toMarketMeResponse(card));
 

@@ -102,7 +102,7 @@ export interface MarketResponse {
 }
 export interface MarketMeResponse {
   id: string;
-  saleCardId: string | null;
+  saleCardId: string;
   exchangeOfferId: string | null;
   status: string;
   name: string;
