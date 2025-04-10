@@ -318,12 +318,32 @@ const getFilterInfo = async (userId: string): Promise<FilterPhotoCard> => {
   };
 };
 
+// 내 포토카드 상세조회 서비스
+const getMyPhotoCardDetailService = async (
+  userId: string,
+  photoCardId: string
+) => {
+  const userPhotoCardId = await prisma.photoCard.findFirst({
+    where: {
+      creatorId: userId,
+      id: photoCardId,
+    },
+  });
+  if (!userPhotoCardId) {
+    throw new Error("포토카드가 존재하지 않습니다.");
+  }
+
+  console.log(userPhotoCardId);
+  return userPhotoCardId;
+};
+
 // 서비스 함수 내보내기
 const photocardService = {
   getMyPhotocards,
   getGradeCounts,
   getFilterInfo,
   getMyPhotocardsCount,
+  getMyPhotoCardDetailService,
 };
 
 export default photocardService;
