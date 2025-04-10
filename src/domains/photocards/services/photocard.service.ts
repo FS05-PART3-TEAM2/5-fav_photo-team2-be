@@ -499,6 +499,7 @@ const getMyPhotoCardDetailService = async (
     creator: userPhotoCard.creator.nickname,
     description: userPhotoCard.description,
     imageUrl: userPhotoCard.imageUrl,
+    userPhotoCardId: userPhotoCardId,
   };
 };
 
