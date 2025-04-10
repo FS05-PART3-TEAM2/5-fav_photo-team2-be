@@ -11,7 +11,6 @@ import { PHOTOCARD_GENRES } from "../constants/filter.constant";
 import { Prisma } from "@prisma/client";
 import { CustomError } from "../../../utils/errors";
 
-
 const prisma = new PrismaClient();
 
 /**
@@ -446,25 +445,24 @@ const getFilterInfo = async (userId: string): Promise<FilterPhotoCard> => {
 // 내 포토카드 상세조회 서비스
 const getMyPhotoCardDetailService = async (
   userId: string,
-  photoCardId: string
+  userPhotoCardId: string
 ) => {
-  const isOwner = await prisma.userPhotoCard.findFirst({
-    where: {
-      ownerId: userId,
-      photoCardId,
-    },
+  const isOwner = await prisma.userPhotoCard.findUnique({
+    where: { id: userPhotoCardId },
   });
 
   if (!isOwner) {
     throw new CustomError("해당 포토카드를 소유하고 있지 않습니다.", 400);
   }
-  const userPhotoCard = await prisma.photoCard.findFirst({
+
+  const { photoCardId, quantity } = isOwner;
+
+  const userPhotoCard = await prisma.photoCard.findUnique({
     where: {
-      creatorId: userId,
       id: photoCardId,
     },
     include: {
-      creator: true,
+      creator: { select: { nickname: true } },
     },
   });
   if (!userPhotoCard) {
@@ -485,7 +483,7 @@ const getMyPhotoCardDetailService = async (
     genre: userPhotoCard.genre,
     name: userPhotoCard.name,
     price: userPhotoCard.price,
-    onSaleAmount: saleCount,
+    availableAmount: quantity,
     creator: userPhotoCard.creator.nickname,
     description: userPhotoCard.description,
     imageUrl: userPhotoCard.imageUrl,
