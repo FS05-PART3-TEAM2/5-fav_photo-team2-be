@@ -101,13 +101,10 @@ export const createPhotocard = async (
   }
 };
 
-export default {
-  getMyPhotocards,
-  getMyPhotocardsCount,
-  createPhotocard,
-};
-
-// 내 포토 카드 상세조회
+/**
+ * 내 포토 카드 상세조회
+ * GET /api/photocards/me/:id
+ */
 export const getMyPhotocardsDetail = (
   req: Request,
   res: Response,
@@ -134,4 +131,11 @@ export const getMyPhotocardsDetail = (
     .catch((error) => {
       next(error);
     });
+};
+
+export default {
+  getMyPhotocards,
+  getMyPhotocardsCount,
+  createPhotocard,
+  getMyPhotocardsDetail,
 };
