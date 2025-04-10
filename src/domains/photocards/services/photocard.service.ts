@@ -9,6 +9,8 @@ import {
 } from "../types/photocard.type";
 import { PHOTOCARD_GENRES } from "../constants/filter.constant";
 import { Prisma } from "@prisma/client";
+import { CustomError } from "../../../utils/errors";
+
 
 const prisma = new PrismaClient();
 
@@ -441,12 +443,62 @@ const getFilterInfo = async (userId: string): Promise<FilterPhotoCard> => {
   };
 };
 
+// 내 포토카드 상세조회 서비스
+const getMyPhotoCardDetailService = async (
+  userId: string,
+  photoCardId: string
+) => {
+  const isOwner = await prisma.userPhotoCard.findFirst({
+    where: {
+      ownerId: userId,
+      photoCardId,
+    },
+  });
+
+  if (!isOwner) {
+    throw new CustomError("해당 포토카드를 소유하고 있지 않습니다.", 400);
+  }
+  const userPhotoCard = await prisma.photoCard.findFirst({
+    where: {
+      creatorId: userId,
+      id: photoCardId,
+    },
+    include: {
+      creator: true,
+    },
+  });
+  if (!userPhotoCard) {
+    throw new CustomError("포토카드가 존재하지 않습니다.", 400);
+  }
+
+  console.log(userPhotoCard);
+
+  const saleCount = await prisma.saleCard.count({
+    where: {
+      sellerId: userId,
+      photoCardId: photoCardId,
+    },
+  });
+
+  return {
+    grade: userPhotoCard.grade,
+    genre: userPhotoCard.genre,
+    name: userPhotoCard.name,
+    price: userPhotoCard.price,
+    onSaleAmount: saleCount,
+    creator: userPhotoCard.creator.nickname,
+    description: userPhotoCard.description,
+    imageUrl: userPhotoCard.imageUrl,
+  };
+};
+
 // 서비스 함수 내보내기
 const photocardService = {
   getMyPhotocards,
   getGradeCounts,
   getFilterInfo,
   getMyPhotocardsCount,
+  getMyPhotoCardDetailService,
 };
 
 export default photocardService;

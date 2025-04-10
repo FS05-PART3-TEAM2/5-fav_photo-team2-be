@@ -71,3 +71,32 @@ export default {
   getMyPhotocards,
   getMyPhotocardsCount,
 };
+
+// 내 포토 카드 상세조회
+export const getMyPhotocardsDetail = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const userId = req.user?.id;
+  const photocardId = req.params.id;
+
+  if (!userId) {
+    res.status(401).json({ message: "you should login" });
+    return;
+  }
+
+  if (!photocardId) {
+    res.status(400).json({ message: "photocardId is required" });
+    return;
+  }
+
+  return photocardService
+    .getMyPhotoCardDetailService(userId, photocardId)
+    .then((result) => {
+      res.status(200).json(result);
+    })
+    .catch((error) => {
+      next(error);
+    });
+};
