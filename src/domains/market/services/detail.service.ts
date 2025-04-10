@@ -65,6 +65,7 @@ export const getBasicDetail = async (
   // 판매자의 포토카드 총 소유량 조회 (totalOwnAmount)
   let totalOwnAmount = 0;
   try {
+    // 판매자가 소유한 해당 포토카드 조회
     const sellerPhotoCards = await prisma.userPhotoCard.findMany({
       where: {
         photoCardId: saleCard.photoCardId,
@@ -78,8 +79,38 @@ export const getBasicDetail = async (
       0
     );
 
+    // 교환 제시 중인 수량 조회 - 2단계로 나누어 조회
+    // 1. 판매자가 제안한 교환 제안 조회
+    const exchangeOffers = await prisma.exchangeOffer.findMany({
+      where: {
+        offererId: saleCard.sellerId, // 판매자가 제안한 교환 제안
+        status: "PENDING", // 대기 중인 교환 제안만 고려
+      },
+      select: {
+        userPhotoCardId: true, // 교환 제안에 사용된 userPhotoCard ID만 선택
+      },
+    });
+
+    if (exchangeOffers.length > 0) {
+      // 2. 교환 제안에 포함된 userPhotoCard 중 현재 포토카드와 같은 종류만 필터링
+      const exchangeUserPhotoCards = await prisma.userPhotoCard.findMany({
+        where: {
+          id: {
+            in: exchangeOffers.map((offer) => offer.userPhotoCardId),
+          },
+          photoCardId: saleCard.photoCardId, // 동일한 포토카드만 필터링
+        },
+      });
+
+      // 교환 제시한 포토카드 수량 (동일한 포토카드 종류인 경우만)
+      const exchangeOfferCount = exchangeUserPhotoCards.length;
+
+      // 총 보유량에서 교환 제시한 수량만 제외 (판매 등록 수량은 제외하지 않음)
+      totalOwnAmount -= exchangeOfferCount;
+    }
+
     console.log(
-      `판매자 ${saleCard.sellerId}의 포토카드 ${saleCard.photoCardId} 총 소유량: ${totalOwnAmount}`
+      `판매자 ${saleCard.sellerId}의 포토카드 ${saleCard.photoCardId} 총 소유량: ${totalOwnAmount} (교환 제시 수량 제외)`
     );
   } catch (error) {
     console.error("판매자의 포토카드 소유 정보 조회 중 오류:", error);
@@ -111,7 +142,10 @@ export const getBasicDetail = async (
     genre: saleCard.photoCard.genre,
     description: saleCard.photoCard.description,
     price: saleCard.price,
-    availableAmount: saleCard.quantity - completedQuantity, // 현재 거래 가능한 수량
+    availableAmount: Math.min(
+      saleCard.quantity - completedQuantity,
+      totalOwnAmount
+    ), // 실제 보유량을 초과하지 않도록 제한
     totalAmount: saleCard.quantity, // 처음 등록한 총 판매 수량
     totalOwnAmount, // 판매자의 총 보유량
     createdAt: saleCard.createdAt.toISOString(),
