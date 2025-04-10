@@ -6,6 +6,7 @@ import {
   PhotocardInfo,
   FilterPhotoCard,
   Cursor,
+  CreatePhotocardRequest,
 } from "../types/photocard.type";
 import { PHOTOCARD_GENRES } from "../constants/filter.constant";
 import { Prisma } from "@prisma/client";
@@ -255,8 +256,12 @@ const buildWhereClause = async ({
   }
 
   // 장르 필터 추가 - 값이 제공되고 "ALL"이 아닌 경우에만 필터링
-  if (genre && genre !== "ALL" && PHOTOCARD_GENRES.includes(genre)) {
-    photoCardWhereClause.genre = genre;
+  if (genre && genre !== "ALL") {
+    // 유효한 장르인지 확인
+    const validGenres = [...PHOTOCARD_GENRES] as string[];
+    if (validGenres.includes(genre)) {
+      photoCardWhereClause.genre = genre;
+    }
   }
 
   return photoCardWhereClause;
@@ -442,6 +447,69 @@ const getFilterInfo = async (userId: string): Promise<FilterPhotoCard> => {
   };
 };
 
+/**
+ * 포토카드 생성 서비스
+ * @param data 포토카드 생성 데이터
+ * @param imageUrl 이미지 URL
+ * @param userId 사용자 ID
+ * @returns 생성된 포토카드 정보
+ */
+const createPhotocard = async (
+  data: CreatePhotocardRequest,
+  imageUrl: string,
+  userId: string
+) => {
+  try {
+    // 포토카드 생성
+    const photocard = await prisma.photoCard.create({
+      data: {
+        name: data.name,
+        genre: data.genre,
+        grade: data.grade,
+        price: data.price,
+        description: data.description,
+        imageUrl: imageUrl,
+        creatorId: userId,
+      },
+    });
+
+    // 등급에 따른 발행 장수 설정
+    let amount = 1; // 기본값 1로 설정
+    switch (data.grade) {
+      case "LEGENDARY":
+        amount = 1;
+        break;
+      case "SUPER_RARE":
+        amount = 3;
+        break;
+      case "RARE":
+        amount = 8;
+        break;
+      case "COMMON":
+        amount = 20;
+        break;
+    }
+
+    // 포토카드 생성 후 자동으로 사용자의 소유 카드로 등록 (수량은 등급에 따라 설정)
+    await prisma.userPhotoCard.create({
+      data: {
+        photoCardId: photocard.id,
+        ownerId: userId,
+        quantity: amount,
+      },
+    });
+
+    // 응답에 amount 추가
+    return {
+      ...photocard,
+      amount,
+    };
+  } catch (error) {
+    console.error("포토카드 생성 중 오류 발생:", error);
+    throw new Error("포토카드 생성에 실패했습니다.");
+  }
+};
+
 // 내 포토카드 상세조회 서비스
 const getMyPhotoCardDetailService = async (
   userId: string,
@@ -508,6 +576,7 @@ const photocardService = {
   getGradeCounts,
   getFilterInfo,
   getMyPhotocardsCount,
+  createPhotocard,
   getMyPhotoCardDetailService,
 };
 

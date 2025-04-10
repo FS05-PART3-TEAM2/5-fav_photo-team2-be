@@ -27,9 +27,7 @@ export const getMyPhotocards = (
     .then((result) => {
       res.status(200).json(result);
     })
-    .catch((error) => {
-      next(error);
-    });
+    .catch(next);
 };
 
 /**
@@ -61,18 +59,52 @@ export const getMyPhotocardsCount = (
         count: result,
       });
     })
-    .catch((error) => {
-      next(error);
+    .catch(next);
+};
+
+/**
+ * 포토카드 생성 컨트롤러
+ * POST /api/photocards
+ */
+export const createPhotocard = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    // 사용자 ID 확인
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({
+        message: "인증이 필요합니다.",
+      });
+      return;
+    }
+
+    // 유효성 검사는 미들웨어에서 이미 완료됨
+    // 포토카드 생성
+    const photocard = await photocardService.createPhotocard(
+      req.body,
+      req.body.imageUrl,
+      userId
+    );
+
+    res.status(201).json({
+      message: "포토카드가 성공적으로 생성되었습니다.",
+      data: photocard,
     });
+  } catch (error) {
+    console.error("포토카드 생성 중 오류 발생:", error);
+    res.status(500).json({
+      message: "포토카드 생성에 실패했습니다.",
+    });
+  }
 };
 
-// 내보내기 형식 수정
-export default {
-  getMyPhotocards,
-  getMyPhotocardsCount,
-};
-
-// 내 포토 카드 상세조회
+/**
+ * 내 포토 카드 상세조회
+ * GET /api/photocards/me/:id
+ */
 export const getMyPhotocardsDetail = (
   req: Request,
   res: Response,
@@ -99,4 +131,11 @@ export const getMyPhotocardsDetail = (
     .catch((error) => {
       next(error);
     });
+};
+
+export default {
+  getMyPhotocards,
+  getMyPhotocardsCount,
+  createPhotocard,
+  getMyPhotocardsDetail,
 };
