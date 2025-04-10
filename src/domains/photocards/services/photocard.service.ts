@@ -471,19 +471,31 @@ const getMyPhotoCardDetailService = async (
 
   console.log(userPhotoCard);
 
-  const saleCount = await prisma.saleCard.count({
+  const saleCount = await prisma.saleCard.findMany({
     where: {
       sellerId: userId,
       photoCardId: photoCardId,
     },
+    select: {
+      quantity: true,
+    },
   });
+
+  // 판매중인 포토 카드
+  const totalSaleCount = saleCount.reduce(
+    (acc, item) => acc + item.quantity,
+    0
+  );
+
+  // 보유한 포토카드 - 판매중인 포토카드
+  const availableAmount = quantity - totalSaleCount;
 
   return {
     grade: userPhotoCard.grade,
     genre: userPhotoCard.genre,
     name: userPhotoCard.name,
     price: userPhotoCard.price,
-    availableAmount: quantity,
+    availableAmount,
     creator: userPhotoCard.creator.nickname,
     description: userPhotoCard.description,
     imageUrl: userPhotoCard.imageUrl,
