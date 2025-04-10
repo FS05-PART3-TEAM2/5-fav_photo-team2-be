@@ -14,6 +14,6 @@ export interface saleCardDto {
   updatedAt: Date;
   totalTradedQuantity?: number;
   seller?: UserDto;
-  photoCard: PhotoCardDto;
+  photoCard?: PhotoCardDto;
   userPhotoCard?: UserPhotoCardDto;
 }
