@@ -90,6 +90,16 @@ export const createExchangeOffer: CreateExchangeOffer = async (
     },
   });
 
+  // MarketOffer에 저장
+  await prisma.marketOffer.create({
+    data: {
+      type: "EXCHANGE",
+      ownerId: exchangeOffer.offererId,
+      saleCardId: null,
+      exchangeOfferId: exchangeOffer.id,
+    },
+  });
+
   // 알림 생성
   const salePhotoCardInfo = `[${saleCardGrade}|${saleCardName}]`; // 판매카드 정보
   const offeredPhotoCardInfo = `[${offeredCardGrade}|${offeredCardName}]`; // 제안카드 정보
