@@ -109,8 +109,8 @@ export const loginService = async (data: LoginInput): Promise<AuthResponse> => {
       options: {
         httpOnly: true,
         // secure: process.env.NODE_ENV === "production",
-        secure: false,
-        sameSite: "lax",
+        secure: true,
+        sameSite: "none",
         maxAge: 60 * 60 * 1000,
       },
     },
