@@ -1,9 +1,11 @@
+import { PhotoCardDto } from "./photoCard.dto";
+
 export interface UserPhotoCardDto {
   id: string;
   ownerId: string;
   photoCardId: string;
   quantity: number;
-  status: string;
   createdAt: Date;
   updatedAt: Date;
+  photoCard: PhotoCardDto;
 }

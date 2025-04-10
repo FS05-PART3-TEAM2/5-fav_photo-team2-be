@@ -1,4 +1,5 @@
 import { saleCardDto } from "./saleCard.dto";
+import { UserPhotoCardDto } from "./userPhotoCard.dto";
 
 export interface ExchangeOfferDto {
   id: string;
@@ -9,4 +10,5 @@ export interface ExchangeOfferDto {
   createdAt: Date;
   updatedAt: Date;
   saleCard: saleCardDto;
+  userPhotoCard: UserPhotoCardDto;
 }
