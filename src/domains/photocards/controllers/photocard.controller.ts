@@ -72,6 +72,7 @@ export default {
   getMyPhotocardsCount,
 };
 
+// 내 포토 카드 상세조회
 export const getMyPhotocardsDetail = (
   req: Request,
   res: Response,
