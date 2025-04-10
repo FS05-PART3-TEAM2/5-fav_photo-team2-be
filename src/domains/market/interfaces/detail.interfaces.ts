@@ -3,7 +3,7 @@ export interface Offer {
   id: string;
   creatorNickname: string;
   name: string;
-  content: string;
+  description: string;
   imageUrl: string;
   grade: string;
   genre: string;

@@ -167,7 +167,7 @@ async function getOfferDetails(offer: any, userId: string): Promise<Offer> {
     id: offer.id,
     creatorNickname: offeredCard.creator.nickname,
     name: offeredCard.name,
-    content: offer.content,
+    description: offer.content,
     imageUrl: offeredCard.imageUrl,
     grade: offeredCard.grade,
     genre: offeredCard.genre,
