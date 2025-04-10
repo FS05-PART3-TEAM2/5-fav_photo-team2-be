@@ -18,11 +18,10 @@ export const getBasicDetail = async (
   id: string,
   userId: string
 ): Promise<BasicDetail> => {
-  // 판매 카드 정보 조회
   const saleCard = await prisma.saleCard.findUnique({
     where: { id },
     include: {
-      photoCard: true, // 포토카드 정보 포함
+      photoCard: true,
     },
   });
 
@@ -30,14 +29,12 @@ export const getBasicDetail = async (
     throw new Error(`ID가 ${id}인 판매 카드를 찾을 수 없습니다.`);
   }
 
-  // 포토카드가 존재하는지 확인
   if (!saleCard.photoCard) {
     throw new Error(
       `ID가 ${saleCard.photoCardId}인 포토카드를 찾을 수 없습니다.`
     );
   }
 
-  // 판매자 정보 조회
   const seller = await prisma.user.findUnique({
     where: { id: saleCard.sellerId },
   });
@@ -48,7 +45,6 @@ export const getBasicDetail = async (
     );
   }
 
-  // 원작자 정보 조회
   const creator = await prisma.user.findUnique({
     where: { id: saleCard.photoCard.creatorId },
   });
@@ -59,65 +55,50 @@ export const getBasicDetail = async (
     );
   }
 
-  // 사용자가 판매자인지 여부 확인
   const isMine = saleCard.sellerId === userId;
 
-  // 판매자의 포토카드 총 소유량 조회 (totalOwnAmount)
   let totalOwnAmount = 0;
   try {
-    // 판매자가 소유한 해당 포토카드 조회
     const sellerPhotoCards = await prisma.userPhotoCard.findMany({
       where: {
         photoCardId: saleCard.photoCardId,
-        ownerId: saleCard.sellerId, // 판매자의 소유량을 조회
+        ownerId: saleCard.sellerId,
       },
     });
 
-    // 판매자가 소유한 동일 포토카드의 수량 합산
     totalOwnAmount = sellerPhotoCards.reduce(
       (sum, card) => sum + card.quantity,
       0
     );
 
-    // 교환 제시 중인 수량 조회 - 2단계로 나누어 조회
-    // 1. 판매자가 제안한 교환 제안 조회
     const exchangeOffers = await prisma.exchangeOffer.findMany({
       where: {
-        offererId: saleCard.sellerId, // 판매자가 제안한 교환 제안
-        status: "PENDING", // 대기 중인 교환 제안만 고려
+        offererId: saleCard.sellerId,
+        status: "PENDING",
       },
       include: {
-        userPhotoCard: true, // 교환 제안에 사용된 userPhotoCard 정보 포함
+        userPhotoCard: true,
       },
     });
 
     let exchangeOfferCount = 0;
 
     if (exchangeOffers.length > 0) {
-      // 교환 제안에 사용된 것 중 현재 포토카드와 동일한 종류만 필터링하고 수량 합산
       for (const offer of exchangeOffers) {
-        // userPhotoCard가 존재하고 현재 포토카드 타입과 같은 경우에만 카운트
         if (
           offer.userPhotoCard &&
           offer.userPhotoCard.photoCardId === saleCard.photoCardId
         ) {
-          // 각 교환 제안은 1장씩 사용하므로 1을 더함
           exchangeOfferCount += 1;
         }
       }
 
-      // 총 보유량에서 교환 제시한 수량만 제외 (판매 등록 수량은 제외하지 않음)
       totalOwnAmount -= exchangeOfferCount;
     }
-
-    console.log(
-      `판매자 ${saleCard.sellerId}의 포토카드 ${saleCard.photoCardId} 총 소유량: ${totalOwnAmount} (교환 제시 수량 ${exchangeOfferCount}장 제외)`
-    );
   } catch (error) {
     console.error("판매자의 포토카드 소유 정보 조회 중 오류:", error);
   }
 
-  // 판매 카드에 대한 거래 완료 수량 계산
   const completedTransactions = await prisma.transactionLog.findMany({
     where: {
       saleCardId: saleCard.id,
@@ -127,13 +108,11 @@ export const getBasicDetail = async (
     },
   });
 
-  // 거래 완료된 총 수량 계산
   const completedQuantity = completedTransactions.reduce(
     (sum, transaction) => sum + transaction.quantity,
     0
   );
 
-  // 기본 응답 구성
   const response: BasicDetail = {
     id: saleCard.id,
     creatorNickname: creator.nickname,
@@ -146,9 +125,9 @@ export const getBasicDetail = async (
     availableAmount: Math.min(
       saleCard.quantity - completedQuantity,
       totalOwnAmount
-    ), // 실제 보유량을 초과하지 않도록 제한
-    totalAmount: saleCard.quantity, // 처음 등록한 총 판매 수량
-    totalOwnAmount, // 판매자의 총 보유량
+    ),
+    totalAmount: saleCard.quantity,
+    totalOwnAmount,
     createdAt: saleCard.createdAt.toISOString(),
     exchangeDetail: {
       grade: saleCard.exchangeGrade,
@@ -168,7 +147,6 @@ export const getBasicDetail = async (
  * @returns 교환 제안 상세 정보
  */
 async function getOfferDetails(offer: any, userId: string): Promise<Offer> {
-  // 제안된 카드 정보 조회
   const userPhotoCard = await prisma.userPhotoCard.findUnique({
     where: { id: offer.userPhotoCardId },
   });
@@ -179,7 +157,6 @@ async function getOfferDetails(offer: any, userId: string): Promise<Offer> {
     );
   }
 
-  // 제안된 카드의 포토카드 정보 조회 (원작자 정보 포함)
   const offeredCard = await prisma.photoCard.findUnique({
     where: { id: userPhotoCard.photoCardId },
     include: {
@@ -189,7 +166,6 @@ async function getOfferDetails(offer: any, userId: string): Promise<Offer> {
     },
   });
 
-  // 제안자 정보 조회
   const offerer = await prisma.user.findUnique({
     where: { id: offer.offererId || userId },
   });
@@ -222,7 +198,6 @@ export const getExchangeDetail = async (
   id: string,
   userId: string
 ): Promise<ExchangeInfo> => {
-  // 판매 카드 정보 조회
   const saleCard = await prisma.saleCard.findUnique({
     where: { id },
   });
@@ -231,10 +206,8 @@ export const getExchangeDetail = async (
     throw new Error(`ID가 ${id}인 판매 카드를 찾을 수 없습니다.`);
   }
 
-  // 사용자가 판매자인지 여부 확인
   const isMine = saleCard.sellerId === userId;
 
-  // 응답 기본 구조
   const response: ExchangeInfo = {
     saleId: saleCard.id,
     isMine,
@@ -242,7 +215,6 @@ export const getExchangeDetail = async (
     myOffers: isMine ? null : [],
   };
 
-  // 내 카드인 경우: 받은 교환 제안 조회
   if (isMine) {
     const exchangeOffers = await prisma.exchangeOffer.findMany({
       where: {
@@ -251,7 +223,6 @@ export const getExchangeDetail = async (
       },
     });
 
-    // 교환 제안 상세 정보 조회
     if (exchangeOffers.length > 0) {
       const offersWithDetails: Offer[] = await Promise.all(
         exchangeOffers.map((offer) => getOfferDetails(offer, userId))
@@ -259,7 +230,6 @@ export const getExchangeDetail = async (
       response.receivedOffers = offersWithDetails;
     }
   } else {
-    // 다른 사람의 카드인 경우: 내가 보낸 교환 제안 조회
     const myOffers = await prisma.exchangeOffer.findMany({
       where: {
         saleCardId: id,
