@@ -9,6 +9,8 @@ import {
   CreatePhotocardRequest,
 } from "../types/photocard.type";
 import { PHOTOCARD_GENRES } from "../constants/filter.constant";
+import { Prisma } from "@prisma/client";
+import { CustomError } from "../../../utils/errors";
 
 const prisma = new PrismaClient();
 
@@ -94,8 +96,57 @@ const getMyPhotocards = async (
     nextCursor = null;
   }
 
-  // 포토카드 ID 목록
-  const photoCardIds = userPhotoCards.map((card) => card.photoCardId);
+  // 판매 중인 카드의 수량 조회
+  const saleCards = await prisma.saleCard.findMany({
+    where: {
+      sellerId: userId,
+      status: "ON_SALE",
+      userPhotoCardId: {
+        in: userPhotoCards.map((card) => card.id),
+      },
+    },
+    select: {
+      userPhotoCardId: true,
+      quantity: true,
+    },
+  });
+
+  // 교환 제시 중(PENDING)인 카드 수량 조회
+  const exchangeOffers = await prisma.exchangeOffer.findMany({
+    where: {
+      offererId: userId,
+      status: "PENDING",
+      userPhotoCardId: {
+        in: userPhotoCards.map((card) => card.id),
+      },
+    },
+    select: {
+      userPhotoCardId: true,
+    },
+  });
+
+  // 교환 제시 중인 카드 수량 맵 (제안 1개당 1장 교환)
+  const exchangeOfferMap = new Map();
+  exchangeOffers.forEach((offer) => {
+    const count = exchangeOfferMap.get(offer.userPhotoCardId) || 0;
+    exchangeOfferMap.set(offer.userPhotoCardId, count + 1);
+  });
+
+  // 판매 중인 카드의 수량 맵 생성
+  const saleCardMap = new Map();
+  saleCards.forEach((card) => {
+    saleCardMap.set(card.userPhotoCardId, card.quantity);
+  });
+
+  // 가용 수량이 1 이상인 카드만 필터링
+  const availableUserPhotoCards = userPhotoCards.filter((card) => {
+    const saleQuantity = saleCardMap.get(card.id) || 0;
+    const offerQuantity = exchangeOfferMap.get(card.id) || 0;
+    return card.quantity - saleQuantity - offerQuantity > 0;
+  });
+
+  // 포토카드 ID 목록 (가용 수량이 있는 것만)
+  const photoCardIds = availableUserPhotoCards.map((card) => card.photoCardId);
 
   // 필터링 조건 구성
   const photoCardWhereClause = await buildWhereClause({
@@ -117,24 +168,37 @@ const getMyPhotocards = async (
     },
   });
 
-  // 수량 정보 매핑
-  const userPhotoCardMap = new Map(
-    userPhotoCards.map((card) => [card.photoCardId, card.quantity])
-  );
+  // 실제 가용 수량 계산
+  const userPhotoCardMap = new Map();
+  availableUserPhotoCards.forEach((card) => {
+    const saleQuantity = saleCardMap.get(card.id) || 0;
+    const offerQuantity = exchangeOfferMap.get(card.id) || 0;
+    userPhotoCardMap.set(card.photoCardId, {
+      userPhotoCardId: card.id,
+      quantity: card.quantity - saleQuantity - offerQuantity,
+    });
+  });
 
   // 응답 데이터 매핑
-  const mappedPhotocards: PhotocardInfo[] = photoCards.map((photoCard) => ({
-    id: photoCard.id,
-    name: photoCard.name,
-    imageUrl: photoCard.imageUrl,
-    grade: photoCard.grade,
-    genre: photoCard.genre,
-    description: photoCard.description,
-    price: photoCard.price,
-    amount: userPhotoCardMap.get(photoCard.id) || 0,
-    createdAt: photoCard.createdAt.toISOString(),
-    creatorNickname: photoCard.creator.nickname,
-  }));
+  const mappedPhotocards: PhotocardInfo[] = photoCards
+    .map((photoCard) => {
+      const cardInfo = userPhotoCardMap.get(photoCard.id);
+      if (!cardInfo) return null; // 가용 수량 없으면 null
+
+      return {
+        id: cardInfo.userPhotoCardId,
+        name: photoCard.name,
+        imageUrl: photoCard.imageUrl,
+        grade: photoCard.grade,
+        genre: photoCard.genre,
+        description: photoCard.description,
+        price: photoCard.price,
+        amount: cardInfo.quantity,
+        createdAt: photoCard.createdAt.toISOString(),
+        creatorNickname: photoCard.creator.nickname,
+      };
+    })
+    .filter(Boolean) as PhotocardInfo[]; // null 값 필터링
 
   // 필터링 후 결과가 없는 경우
   if (mappedPhotocards.length === 0) {
@@ -258,12 +322,36 @@ const getGradeCounts = async (userId: string): Promise<GradeCounts> => {
     LEGENDARY: 0,
   };
 
-  // SQL 쿼리로 등급별 개수 집계
+  // 판매 중인 카드와 교환 제시 중인 카드를 고려한 SQL 쿼리
   const result = await prisma.$queryRaw`
-    SELECT p."grade", COUNT(DISTINCT u."photoCardId") as count
+    WITH SaleQuantities AS (
+      SELECT 
+        up."photoCardId",
+        COALESCE(SUM(s."quantity"), 0) as sale_quantity
+      FROM "SaleCard" s
+      JOIN "UserPhotoCard" up ON s."userPhotoCardId" = up."id"
+      WHERE s."sellerId" = ${userId} AND s."status" = 'ON_SALE'
+      GROUP BY up."photoCardId"
+    ),
+    ExchangeQuantities AS (
+      SELECT 
+        u."photoCardId",
+        COUNT(*) as offer_quantity
+      FROM "ExchangeOffer" e
+      JOIN "UserPhotoCard" u ON e."userPhotoCardId" = u."id"
+      WHERE e."offererId" = ${userId} AND e."status" = 'PENDING'
+      GROUP BY u."photoCardId"
+    )
+    SELECT 
+      p."grade", 
+      COUNT(DISTINCT u."photoCardId") as count
     FROM "UserPhotoCard" u
     JOIN "PhotoCard" p ON u."photoCardId" = p."id"
-    WHERE u."ownerId" = ${userId}
+    LEFT JOIN SaleQuantities sq ON u."photoCardId" = sq."photoCardId"
+    LEFT JOIN ExchangeQuantities eq ON u."photoCardId" = eq."photoCardId"
+    WHERE 
+      u."ownerId" = ${userId}
+      AND (u."quantity" - COALESCE(sq.sale_quantity, 0) - COALESCE(eq.offer_quantity, 0)) > 0
     GROUP BY p."grade"
   `;
 
@@ -282,22 +370,58 @@ const getGradeCounts = async (userId: string): Promise<GradeCounts> => {
  * 필터링 정보를 조회하는 함수
  */
 const getFilterInfo = async (userId: string): Promise<FilterPhotoCard> => {
+  // 판매 중인 카드와 교환 제시 중인 카드를 고려한 공통 쿼리 부분
+  const commonQueryPart = `
+    WITH SaleQuantities AS (
+      SELECT 
+        up."photoCardId",
+        COALESCE(SUM(s."quantity"), 0) as sale_quantity
+      FROM "SaleCard" s
+      JOIN "UserPhotoCard" up ON s."userPhotoCardId" = up."id"
+      WHERE s."sellerId" = '${userId}' AND s."status" = 'ON_SALE'
+      GROUP BY up."photoCardId"
+    ),
+    ExchangeQuantities AS (
+      SELECT 
+        u."photoCardId",
+        COUNT(*) as offer_quantity
+      FROM "ExchangeOffer" e
+      JOIN "UserPhotoCard" u ON e."userPhotoCardId" = u."id"
+      WHERE e."offererId" = '${userId}' AND e."status" = 'PENDING'
+      GROUP BY u."photoCardId"
+    )
+  `;
+
   // 등급별 필터 정보 조회
   const gradeFilterQuery = await prisma.$queryRaw`
-    SELECT p."grade" as name, COUNT(DISTINCT u."photoCardId") as count
+    ${Prisma.raw(commonQueryPart)}
+    SELECT 
+      p."grade" as name, 
+      COUNT(DISTINCT u."photoCardId") as count
     FROM "UserPhotoCard" u
     JOIN "PhotoCard" p ON u."photoCardId" = p."id"
-    WHERE u."ownerId" = ${userId}
+    LEFT JOIN SaleQuantities sq ON u."photoCardId" = sq."photoCardId"
+    LEFT JOIN ExchangeQuantities eq ON u."photoCardId" = eq."photoCardId"
+    WHERE 
+      u."ownerId" = ${userId}
+      AND (u."quantity" - COALESCE(sq.sale_quantity, 0) - COALESCE(eq.offer_quantity, 0)) > 0
     GROUP BY p."grade"
     ORDER BY count DESC
   `;
 
   // 장르별 필터 정보 조회
   const genreFilterQuery = await prisma.$queryRaw`
-    SELECT p."genre" as name, COUNT(DISTINCT u."photoCardId") as count
+    ${Prisma.raw(commonQueryPart)}
+    SELECT 
+      p."genre" as name, 
+      COUNT(DISTINCT u."photoCardId") as count
     FROM "UserPhotoCard" u
     JOIN "PhotoCard" p ON u."photoCardId" = p."id"
-    WHERE u."ownerId" = ${userId}
+    LEFT JOIN SaleQuantities sq ON u."photoCardId" = sq."photoCardId"
+    LEFT JOIN ExchangeQuantities eq ON u."photoCardId" = eq."photoCardId"
+    WHERE 
+      u."ownerId" = ${userId}
+      AND (u."quantity" - COALESCE(sq.sale_quantity, 0) - COALESCE(eq.offer_quantity, 0)) > 0
     GROUP BY p."genre"
     ORDER BY count DESC
   `;
@@ -386,6 +510,55 @@ const createPhotocard = async (
   }
 };
 
+// 내 포토카드 상세조회 서비스
+const getMyPhotoCardDetailService = async (
+  userId: string,
+  photoCardId: string
+) => {
+  const isOwner = await prisma.userPhotoCard.findFirst({
+    where: {
+      ownerId: userId,
+      photoCardId,
+    },
+  });
+
+  if (!isOwner) {
+    throw new CustomError("해당 포토카드를 소유하고 있지 않습니다.", 400);
+  }
+  const userPhotoCard = await prisma.photoCard.findFirst({
+    where: {
+      creatorId: userId,
+      id: photoCardId,
+    },
+    include: {
+      creator: true,
+    },
+  });
+  if (!userPhotoCard) {
+    throw new CustomError("포토카드가 존재하지 않습니다.", 400);
+  }
+
+  console.log(userPhotoCard);
+
+  const saleCount = await prisma.saleCard.count({
+    where: {
+      sellerId: userId,
+      photoCardId: photoCardId,
+    },
+  });
+
+  return {
+    grade: userPhotoCard.grade,
+    genre: userPhotoCard.genre,
+    name: userPhotoCard.name,
+    price: userPhotoCard.price,
+    onSaleAmount: saleCount,
+    creator: userPhotoCard.creator.nickname,
+    description: userPhotoCard.description,
+    imageUrl: userPhotoCard.imageUrl,
+  };
+};
+
 // 서비스 함수 내보내기
 const photocardService = {
   getMyPhotocards,
@@ -393,6 +566,7 @@ const photocardService = {
   getFilterInfo,
   getMyPhotocardsCount,
   createPhotocard,
+  getMyPhotoCardDetailService,
 };
 
 export default photocardService;

@@ -42,7 +42,7 @@ export interface Cursor {
  * 포토카드 상세 정보 인터페이스
  */
 export interface PhotocardInfo {
-  id: string;
+  id: string | null;
   name: string;
   imageUrl: string;
   grade: string;
@@ -80,7 +80,7 @@ export type CursorType = Cursor;
 export type PhotocardResponse = PhotocardInfo;
 
 export type PhotocardDto = {
-  id: string;
+  id: string | null;
   name: string;
   imageUrl: string;
   grade: string;
