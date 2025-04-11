@@ -70,6 +70,8 @@ export const getMyPhotocardsCount = (
  * POST /api/photocards
  */
 export const createPhotocard: ApiSignature = async (req, res) => {
+  console.log("req", req);
+
   const userId = req.user.id;
   const body = req.body;
   const file = req.file; // multer가 넣어준 파일 정보
