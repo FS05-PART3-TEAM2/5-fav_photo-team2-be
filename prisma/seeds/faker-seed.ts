@@ -213,8 +213,6 @@ async function main() {
 
   try {
     // 데이터 삭제는 참조 무결성을 위해 역순으로 진행
-    console.log("데이터 삭제 중...");
-
     // 1. 가장 참조가 많은 자식 테이블들부터 삭제
     await prisma.notification
       .deleteMany({})
@@ -231,6 +229,9 @@ async function main() {
     await prisma.randomBoxDraw
       .deleteMany({})
       .catch((e) => console.log("randomBoxDraw 삭제 오류:", e.message));
+    await prisma.pointHistory
+      .deleteMany({})
+      .catch((e) => console.log("pointHistory 삭제 오류:", e.message));
 
     // 2. 중간 계층 테이블 삭제
     await prisma.saleCard
@@ -255,8 +256,6 @@ async function main() {
     await prisma.user
       .deleteMany({})
       .catch((e) => console.log("user 삭제 오류:", e.message));
-
-    console.log("새로운 데이터 생성 중...");
 
     // 1. 사용자 생성
     const users = [];
@@ -351,14 +350,14 @@ async function main() {
         let quantity = 1;
         switch (grade) {
           case "COMMON":
-            quantity = 20; // 고정값 20으로 설정
-            break;
+            quantity = 20;
+            break; // 고정값 20으로 설정
           case "RARE":
-            quantity = 8; // 고정값 8로 설정
-            break;
+            quantity = 8;
+            break; // 고정값 8로 설정
           case "SUPER_RARE":
-            quantity = 3; // 고정값 3으로 설정
-            break;
+            quantity = 3;
+            break; // 고정값 3으로 설정
           case "LEGENDARY":
             quantity = 1;
             break;
@@ -487,7 +486,7 @@ async function main() {
       );
 
       // TransactionLog 필드 수정 (buyerId/sellerId → newOwnerId/oldOwnerId)
-      const transactionLog = await prisma.transactionLog.create({
+      await prisma.transactionLog.create({
         data: {
           saleCardId: saleCard.id,
           newOwnerId: buyer.id, // buyerId 대신 newOwnerId 사용
@@ -591,7 +590,6 @@ async function main() {
     for (const user of users) {
       // 각 사용자별 3~5개의 알림 생성 (최소 몇 개는 생성되도록)
       const notificationsCount = faker.number.int({ min: 3, max: 5 });
-
       console.log(
         `사용자 ${user.nickname}에게 ${notificationsCount}개 알림 생성 중...`
       );
@@ -600,7 +598,6 @@ async function main() {
         // 랜덤한 알림 메시지 선택
         const notificationMessage =
           faker.helpers.arrayElement(notificationMessages);
-
         // 30% 확률로 읽음 처리
         const isRead = Math.random() > 0.7;
 
