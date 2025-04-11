@@ -106,7 +106,7 @@ export type CreatePhotocard = (
   imageUrl: string,
   publicId: string,
   userId: string
-) => Promise<PhotocardDto & { amount: number }>;
+) => Promise<{ message: string; userPhotoCardId: string }>;
 
 export interface CreatePhotocardResponse {
   id: string;

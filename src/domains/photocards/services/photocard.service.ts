@@ -502,8 +502,8 @@ const createPhotocard: CreatePhotocard = async (
     }
 
     return {
-      ...newPhotoCard,
-      amount: stock,
+      message: "포토카드 생성 완료",
+      userPhotoCardId: newUserPhotoCard.id,
     };
   });
 
