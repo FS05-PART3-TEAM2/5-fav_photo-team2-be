@@ -470,6 +470,21 @@ const createPhotocard: CreatePhotocard = async (
   } = body;
   const [price, stock] = [strPrice, strStock].map((str) => Number(str));
 
+  console.log(
+    "name: ",
+    name,
+    "genre: ",
+    genre,
+    "grade: ",
+    grade,
+    "price: ",
+    price,
+    "stock: ",
+    stock,
+    "description: ",
+    description
+  );
+
   // 포토카드 생성 트랜잭션
   const result = await prisma.$transaction(async (tx) => {
     // 1. 포토카드 생성
@@ -500,6 +515,8 @@ const createPhotocard: CreatePhotocard = async (
     if (!newUserPhotoCard) {
       throw new CustomError("포토카드 생성에 실패했습니다.", 404);
     }
+
+    console.log("newUserPhotoCardId: ", newUserPhotoCard.id);
 
     return {
       message: "포토카드 생성 완료",
