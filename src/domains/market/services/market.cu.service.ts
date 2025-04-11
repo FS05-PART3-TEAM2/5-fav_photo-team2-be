@@ -208,7 +208,7 @@ const purchaseMarketItem: PurchaseMarketItem = async (body, userId) => {
       data: {
         pointId: updatedCustomerPoint.id,
         amount: totalPrice, // 양수 값
-        resourceType: "PURCHASE", // 구매로 인한 포인트 차감
+        resourceType: "PURCHASE" as const, // 타입 캐스팅으로 타입 안전성 보장
         resourceId: saleLog.id,
       },
     });
@@ -231,7 +231,7 @@ const purchaseMarketItem: PurchaseMarketItem = async (body, userId) => {
       data: {
         pointId: updatedSellerPoint.id,
         amount: totalPrice, // 양수 값
-        resourceType: "SALE", // 판매로 인한 포인트 증가
+        resourceType: "SALE" as const, // 타입 캐스팅으로 타입 안전성 보장
         resourceId: saleLog.id,
       },
     });

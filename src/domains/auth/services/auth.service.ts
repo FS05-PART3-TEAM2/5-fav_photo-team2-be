@@ -49,7 +49,7 @@ export const signupService = async (
     data: {
       pointId: point.id,
       amount: 1000,
-      resourceType: "SIGNUP",
+      resourceType: "SIGNUP" as const,
       resourceId: "SIGNUP",
     },
   });
