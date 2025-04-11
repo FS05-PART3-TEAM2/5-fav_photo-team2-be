@@ -392,6 +392,14 @@ export const acceptOffer = async (
       data: { status: "ACCEPTED" },
     });
 
+    // 판매 카드 수량이 0이면 SOLD_OUT 처리
+    if (saleCard.quantity === 0) {
+      await tx.saleCard.update({
+        where: { id: saleCard.id },
+        data: { status: "SOLD_OUT" },
+      });
+    }
+
     // 9. 거래 내역 기록
     await tx.transactionLog.create({
       data: {
@@ -404,37 +412,7 @@ export const acceptOffer = async (
       },
     });
 
-    // 10. saleCard 수량 업데이트, 수량이 0이면 SOLD_OUT 상태로 변경
-    // saleCard에 락 설정
-    await tx.$executeRaw`SELECT * FROM "SaleCard" WHERE id = ${saleCard.id} FOR UPDATE`;
-
-    // TransactionLog에서 해당 saleCard의 총 거래 수량 조회
-    const transactionLogs = await tx.transactionLog.findMany({
-      where: { saleCardId: saleCard.id },
-      select: { quantity: true },
-    });
-
-    // 총 거래된 수량 계산 (현재 거래는 이미 로그에 저장되어 있으므로 +1 필요 없음)
-    const totalTransactedQuantity = transactionLogs.reduce(
-      (total, log) => total + log.quantity,
-      0
-    );
-
-    // 남은 수량 계산
-    const remainingQuantity = Math.max(
-      0,
-      saleCard.quantity - totalTransactedQuantity
-    );
-
-    await tx.saleCard.update({
-      where: { id: saleCard.id },
-      data: {
-        quantity: remainingQuantity,
-        ...(remainingQuantity === 0 ? { status: "SOLD_OUT" } : {}),
-      },
-    });
-
-    // 11. 알림 생성 - 판매자(seller)와 교환 제안자(offerer) 모두에게 알림 전송
+    // 10. 알림 생성 - 판매자(seller)와 교환 제안자(offerer) 모두에게 알림 전송
     await createNotification({
       userId: saleCard.sellerId,
       message: `${offerer.nickname}님과의 교환이 성사되었습니다.`,
