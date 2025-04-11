@@ -30,7 +30,6 @@ router.post(
   "/",
   upload.single("image"), // 파일 업로드 (req.file 생성)
   authenticate, // 인증 미들웨어
-  validateAll({ body: CreatePhotocardSchema }), // body 유효성 검사
   requestHandler(createPhotocard) // 실제 서비스 실행
 );
 
