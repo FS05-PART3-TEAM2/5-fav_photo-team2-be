@@ -25,7 +25,30 @@ import {
  * @returns
  */
 const getMarketList: GetMarketList = async (queries) => {
-  const { keyword, genre, grade, cursor, limit = 15 } = queries;
+  const {
+    keyword,
+    genre,
+    grade,
+    cursor,
+    limit = 15,
+    sort = "recent",
+    status,
+  } = queries;
+
+  let orderBy: any[] = [];
+
+  if (sort === "recent") {
+    orderBy = [{ createdAt: "desc" }, { id: "desc" }];
+  } else if (sort === "old") {
+    orderBy = [{ createdAt: "asc" }, { id: "asc" }];
+  } else if (sort === "cheap") {
+    orderBy = [{ price: "asc" }, { id: "desc" }];
+  } else if (sort === "expensive") {
+    orderBy = [{ price: "desc" }, { id: "desc" }];
+  } else {
+    // 기본값은 최신순
+    orderBy = [{ createdAt: "desc" }, { id: "desc" }];
+  }
 
   const saleCards: MarketCardDto[] = await prisma.saleCard.findMany({
     where: {
@@ -60,14 +83,12 @@ const getMarketList: GetMarketList = async (queries) => {
           },
         },
         {
-          status: {
-            in: ["ON_SALE", "SOLD_OUT"],
-          },
+          status: status ? { equals: status } : { in: ["ON_SALE", "SOLD_OUT"] },
         },
       ],
     },
     take: limit,
-    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    orderBy,
     include: {
       seller: { select: { id: true, nickname: true } },
       userPhotoCard: { select: { quantity: true } },
