@@ -460,7 +460,16 @@ const createPhotocard: CreatePhotocard = async (
   publicId,
   userId
 ) => {
-  const { name, genre, grade, price, stock, description } = body;
+  const {
+    name,
+    genre,
+    grade,
+    price: strPrice,
+    stock: strStock,
+    description,
+  } = body;
+  const [price, stock] = [strPrice, strStock].map((str) => Number(str));
+
   // 포토카드 생성 트랜잭션
   const result = await prisma.$transaction(async (tx) => {
     // 1. 포토카드 생성

@@ -80,7 +80,6 @@ export const createPhotocard: ApiSignature = async (req, res) => {
 
   // file을 cloudinary에 업로드
   const { imageUrl, publicId } = await uploadToCloudinary(file.buffer);
-  console.log("imageUrl: ", imageUrl);
 
   const response = await photocardService.createPhotocard(
     body,
