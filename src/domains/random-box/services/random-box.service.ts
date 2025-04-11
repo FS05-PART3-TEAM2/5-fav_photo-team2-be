@@ -133,12 +133,21 @@ export const drawBox = async (userId: string, userPick: number) => {
     where: { userId },
   });
 
+  console.log("유저 아이디", userId);
   await prisma.$transaction(async (tx) => {
     if (existingPoint) {
       await tx.point.update({
         where: { userId },
         data: {
           points: { increment: point },
+        },
+      });
+      await tx.pointHistory.create({
+        data: {
+          pointId: userId,
+          amount: point,
+          resourceType: "RANDOM_BOX",
+          resourceId: "RANDOM_BOX",
         },
       });
     } else {
