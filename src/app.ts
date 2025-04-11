@@ -9,7 +9,7 @@ dotenv.config();
 const app = express();
 
 const corsOptions: cors.CorsOptions = {
-  origin: ["http://localhost:3000"], // 허용할 도메인
+  origin: ["http://localhost:3000", "https://5-favphoto-team2.vercel.app"], // 허용할 도메인
   methods: ["GET", "POST", "PUT", "DELETE"], // 허용할 HTTP 메서드
   credentials: true, // 쿠키 허용 여부
 };
