@@ -70,8 +70,6 @@ export const getMyPhotocardsCount = (
  * POST /api/photocards
  */
 export const createPhotocard: ApiSignature = async (req, res) => {
-  console.log("req", req);
-
   const userId = req.user.id;
   const body = req.body;
   const file = req.file; // multer가 넣어준 파일 정보
@@ -80,6 +78,7 @@ export const createPhotocard: ApiSignature = async (req, res) => {
     throw new CustomError("이미지 파일이 필요합니다.", 400);
   }
 
+  console.log("userId", userId);
   console.log("body", body);
   console.log("file", file);
 
