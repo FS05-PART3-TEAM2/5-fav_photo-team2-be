@@ -39,18 +39,38 @@ export const toMarketResponse = (
 export const toMarketMeResponse = (card: MarketOfferDto): MarketMeResponse => {
   const offer = card.saleCard
     ? {
+        saleCardId: card.saleCard.id,
+        exchangeOfferId: null,
         status: card.saleCard.status,
-        saleCard: card.saleCard,
-        total: card.saleCard.quantity,
+        name: card.saleCard.photoCard!.name,
+        genre: card.saleCard.photoCard!.genre,
+        grade: card.saleCard.photoCard!.grade,
+        price: card.saleCard.price,
+        image: card.saleCard.photoCard!.imageUrl,
         remaining:
           card.saleCard.quantity - (card.saleCard.totalTradedQuantity || 0),
+        total: card.saleCard.quantity,
+        creator: {
+          id: card.saleCard.photoCard!.creator.id,
+          nickname: card.saleCard.photoCard!.creator.nickname,
+        },
       }
     : card.exchangeOffer
     ? {
+        saleCardId: card.exchangeOffer.saleCard.id,
+        exchangeOfferId: card.exchangeOffer.id,
         status: card.exchangeOffer.status,
-        saleCard: card.exchangeOffer.saleCard,
-        total: 1,
+        name: card.exchangeOffer.userPhotoCard.photoCard.name,
+        genre: card.exchangeOffer.userPhotoCard.photoCard.genre,
+        grade: card.exchangeOffer.userPhotoCard.photoCard.grade,
+        price: card.exchangeOffer.userPhotoCard.photoCard.price,
+        image: card.exchangeOffer.userPhotoCard.photoCard.imageUrl,
         remaining: 1,
+        total: 1,
+        creator: {
+          id: card.exchangeOffer.userPhotoCard.photoCard.creator.id,
+          nickname: card.exchangeOffer.userPhotoCard.photoCard.creator.nickname,
+        },
       }
     : null;
 
@@ -60,19 +80,18 @@ export const toMarketMeResponse = (card: MarketOfferDto): MarketMeResponse => {
     );
 
   return {
-    saleCardId: card.id,
+    id: card.id,
+    saleCardId: offer.saleCardId,
+    exchangeOfferId: offer.exchangeOfferId,
     status: offer.status,
-    name: offer.saleCard.photoCard.name,
-    genre: offer.saleCard.photoCard.genre,
-    grade: offer.saleCard.photoCard.grade,
-    price: offer.saleCard.price,
-    image: offer.saleCard.photoCard.imageUrl,
-    total: offer.total,
+    name: offer.name,
+    genre: offer.genre,
+    grade: offer.grade,
+    price: offer.price,
+    image: offer.image,
     remaining: offer.remaining,
-    creator: {
-      id: offer.saleCard.photoCard.creator.id,
-      nickname: offer.saleCard.photoCard.creator.nickname,
-    },
+    total: offer.total,
+    creator: offer.creator,
     createdAt: card.createdAt.toISOString(),
     updatedAt: card.updatedAt.toISOString(),
   };

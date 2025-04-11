@@ -101,7 +101,9 @@ export interface MarketResponse {
   updatedAt: string;
 }
 export interface MarketMeResponse {
+  id: string;
   saleCardId: string;
+  exchangeOfferId: string | null;
   status: string;
   name: string;
   genre: string;

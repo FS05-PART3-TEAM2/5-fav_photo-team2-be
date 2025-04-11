@@ -1,5 +1,13 @@
 import { z } from "zod";
-import { PhotocardsQueryWithTransform } from "../validators/photocard.validator";
+import {
+  PhotocardsQueryWithTransform,
+  CreatePhotocardSchema,
+  CreatePhotocardRequest,
+} from "../validators/photocard.validator";
+import {
+  PHOTOCARD_GENRES,
+  PHOTOCARD_GRADES,
+} from "../constants/filter.constant";
 
 /**
  * 사용자의 포토카드 조회 응답 인터페이스
@@ -35,7 +43,7 @@ export interface Cursor {
  * 포토카드 상세 정보 인터페이스
  */
 export interface PhotocardInfo {
-  id: string;
+  id: string | null;
   name: string;
   imageUrl: string;
   grade: string;
@@ -73,7 +81,7 @@ export type CursorType = Cursor;
 export type PhotocardResponse = PhotocardInfo;
 
 export type PhotocardDto = {
-  id: string;
+  id: string | null;
   name: string;
   imageUrl: string;
   grade: string;
@@ -83,5 +91,33 @@ export type PhotocardDto = {
   amount: number;
   createdAt: Date;
   updatedAt: Date;
-  userId: string;
+  creatorId: string;
 };
+
+/**
+ * 포토카드 생성 요청 인터페이스
+ */
+
+/**
+ * 포토카드 생성 응답 인터페이스
+ */
+export type CreatePhotocard = (
+  body: CreatePhotocardRequest,
+  imageUrl: string,
+  publicId: string,
+  userId: string
+) => Promise<{ message: string; userPhotoCardId: string }>;
+
+export interface CreatePhotocardResponse {
+  id: string;
+  name: string;
+  genre: string;
+  grade: string;
+  price: number;
+  description: string;
+  imageUrl: string;
+  amount: number;
+  creatorId: string;
+  createdAt: Date;
+  updatedAt: Date;
+}

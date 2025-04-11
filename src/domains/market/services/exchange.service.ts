@@ -2,8 +2,119 @@ import { PrismaClient, Prisma } from "@prisma/client";
 import { ExchangeOffer } from "../interfaces/exchange.interface";
 import { CustomError } from "../../../utils/errors";
 import { createNotification } from "../../notification/services/notificationService";
+import { CreateExchangeOffer } from "../types/exchange.type";
 
 const prisma = new PrismaClient();
+
+/**
+ * 교환제안 생성
+ * @param body 교환 제안 정보
+ * @param userId 현재 사용자 ID
+ */
+export const createExchangeOffer: CreateExchangeOffer = async (
+  body,
+  userId
+) => {
+  const { saleCardId, offeredUserCardId, content } = body;
+  const offererId = userId; // 제시자 ID
+
+  // 판매카드 조회
+  const saleCard = await prisma.saleCard.findUnique({
+    where: { id: saleCardId },
+    select: {
+      sellerId: true,
+      photoCard: {
+        select: {
+          name: true,
+          grade: true,
+        },
+      },
+    },
+  });
+  // 판매카드가 없거나 판매중이 아닌 경우
+  if (!saleCard) {
+    throw new CustomError("판매카드를 찾을 수 없습니다.", 404);
+  }
+  const { sellerId, photoCard } = saleCard; // 판매자 ID, 판매 포토카드
+  const { name: saleCardName, grade: saleCardGrade } = photoCard; // 판매카드의 포토카드 정보
+
+  // 판매자가 제안자와 동일한 경우 에러 처리
+  const isSelfOffer = sellerId === offererId;
+  if (isSelfOffer) {
+    throw new CustomError("자신의 카드에 교환 제안을 할 수 없습니다.", 403);
+  }
+
+  // 교환 제시자 닉네임 조회
+  const offerer = await prisma.user.findUnique({
+    where: { id: offererId },
+    select: { nickname: true },
+  });
+  if (!offerer) {
+    throw new CustomError("교환 제시자 정보를 찾을 수 없습니다.", 404);
+  }
+  const offererNickname = offerer.nickname; // 교환 제시자 닉네임
+
+  // 제안카드 조회
+  const offeredUserCard = await prisma.userPhotoCard.findUnique({
+    where: { id: offeredUserCardId },
+    select: { photoCardId: true, quantity: true },
+  });
+  if (!offeredUserCard) {
+    throw new CustomError("제안한 카드를 찾을 수 없습니다.", 404);
+  }
+  const { photoCardId: offeredCardId, quantity } = offeredUserCard; // 제안카드 ID, 수량
+  if (quantity < 1) {
+    throw new CustomError("제안한 카드의 수량이 부족합니다.", 409);
+  }
+  // 제안카드의 포토카드 정보 조회
+  const offeredPhotoCard = await prisma.photoCard.findUnique({
+    where: { id: offeredCardId },
+    select: { name: true, grade: true },
+  });
+  if (!offeredPhotoCard) {
+    throw new CustomError(
+      "제안한 카드의 포토카드 정보를 찾을 수 없습니다.",
+      404
+    );
+  }
+  const { name: offeredCardName, grade: offeredCardGrade } = offeredPhotoCard; // 제안카드의 포토카드 정보
+
+  // 교환 제안 생성
+  const exchangeOffer = await prisma.exchangeOffer.create({
+    data: {
+      saleCardId,
+      offererId,
+      userPhotoCardId: offeredUserCardId,
+      status: "PENDING",
+      content,
+    },
+  });
+
+  // MarketOffer에 저장
+  await prisma.marketOffer.create({
+    data: {
+      type: "EXCHANGE",
+      ownerId: exchangeOffer.offererId,
+      saleCardId: null,
+      exchangeOfferId: exchangeOffer.id,
+    },
+  });
+
+  // 알림 생성
+  const salePhotoCardInfo = `[${saleCardGrade}|${saleCardName}]`; // 판매카드 정보
+  const offeredPhotoCardInfo = `[${offeredCardGrade}|${offeredCardName}]`; // 제안카드 정보
+
+  const offererMessage = `${salePhotoCardInfo}에 대한 교환제안이 등록되었습니다.`; // 제안자에게 알림
+  const sellerMessage = `${offererNickname}님이 ${salePhotoCardInfo}에 대해 ${offeredPhotoCardInfo} 카드로 교환을 제안했습니다.`;
+
+  await createNotification({ userId: offererId, message: offererMessage }); // 제안자 알림
+  await createNotification({ userId: sellerId, message: sellerMessage }); // 판매자 알림
+
+  return {
+    message: "포토카드 제안이 완료되었습니다.",
+    exchangeOffer,
+  };
+};
 
 /**
  * 교환제안 취소/거절
@@ -272,19 +383,7 @@ export const acceptOffer = async (
       });
     }
 
-    // 8. saleCard 수량 차감, 수량이 0이면 SOLD_OUT 상태로 변경
-    // saleCard에 락 설정
-    await tx.$executeRaw`SELECT * FROM "SaleCard" WHERE id = ${saleCard.id} FOR UPDATE`;
-
-    await tx.saleCard.update({
-      where: { id: saleCard.id },
-      data: {
-        quantity: saleCard.quantity - 1,
-        ...(saleCard.quantity - 1 === 0 ? { status: "SOLD_OUT" } : {}),
-      },
-    });
-
-    // 9. 교환제안 상태 업데이트
+    // 8. 교환제안 상태 업데이트
     // 교환제안에도 락 설정
     await tx.$executeRaw`SELECT * FROM "ExchangeOffer" WHERE id = ${id} FOR UPDATE`;
 
@@ -293,7 +392,15 @@ export const acceptOffer = async (
       data: { status: "ACCEPTED" },
     });
 
-    // 10. 거래 내역 기록
+    // 판매 카드 수량이 0이면 SOLD_OUT 처리
+    if (saleCard.quantity === 0) {
+      await tx.saleCard.update({
+        where: { id: saleCard.id },
+        data: { status: "SOLD_OUT" },
+      });
+    }
+
+    // 9. 거래 내역 기록
     await tx.transactionLog.create({
       data: {
         transactionType: "EXCHANGE",
@@ -305,7 +412,7 @@ export const acceptOffer = async (
       },
     });
 
-    // 11. 알림 생성 - 판매자(seller)와 교환 제안자(offerer) 모두에게 알림 전송
+    // 10. 알림 생성 - 판매자(seller)와 교환 제안자(offerer) 모두에게 알림 전송
     await createNotification({
       userId: saleCard.sellerId,
       message: `${offerer.nickname}님과의 교환이 성사되었습니다.`,
@@ -320,3 +427,11 @@ export const acceptOffer = async (
     return acceptedOffer as unknown as ExchangeOffer;
   });
 };
+
+const exchangeService = {
+  createExchangeOffer,
+  failOffer,
+  acceptOffer,
+};
+
+export default exchangeService;
