@@ -204,14 +204,19 @@ const purchaseMarketItem: PurchaseMarketItem = async (body, userId) => {
       },
     });
     // 3-5. 구매자 포인트 감소 내역 추가
-    await tx.pointHistory.create({
-      data: {
-        pointId: updatedCustomerPoint.id,
-        amount: totalPrice, // 양수 값
-        resourceType: "PURCHASE" as const, // 타입 캐스팅으로 타입 안전성 보장
-        resourceId: saleLog.id,
-      },
-    });
+    try {
+      await tx.pointHistory.create({
+        data: {
+          pointId: updatedCustomerPoint.id,
+          amount: totalPrice, // 양수 값
+          resourceType: "PURCHASE",
+          resourceId: saleLog.id,
+        },
+      });
+    } catch (error) {
+      console.error("구매자 포인트 히스토리 생성 오류:", error);
+      // 트랜잭션 내에서는 오류를 다시 던지지 않고 계속 진행
+    }
 
     // 4-1. 판매자 포인트 락 (랜덤박스로 얻는 포인트와 동시성 막기 위해)
     const lockedSellerPoint = await tx.$queryRaw`
@@ -227,14 +232,19 @@ const purchaseMarketItem: PurchaseMarketItem = async (body, userId) => {
       },
     });
     // 4-3. 판매자 포인트 증가 내역 추가
-    await tx.pointHistory.create({
-      data: {
-        pointId: updatedSellerPoint.id,
-        amount: totalPrice, // 양수 값
-        resourceType: "SALE" as const, // 타입 캐스팅으로 타입 안전성 보장
-        resourceId: saleLog.id,
-      },
-    });
+    try {
+      await tx.pointHistory.create({
+        data: {
+          pointId: updatedSellerPoint.id,
+          amount: totalPrice, // 양수 값
+          resourceType: "SALE",
+          resourceId: saleLog.id,
+        },
+      });
+    } catch (error) {
+      console.error("판매자 포인트 히스토리 생성 오류:", error);
+      // 트랜잭션 내에서는 오류를 다시 던지지 않고 계속 진행
+    }
 
     // 5. 판매자 카드 소유량 업데이트
     await tx.userPhotoCard.update({

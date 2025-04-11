@@ -45,14 +45,21 @@ export const signupService = async (
   const point = await prisma.point.create({
     data: { userId: user.id, points: 1000 },
   });
-  await prisma.pointHistory.create({
-    data: {
-      pointId: point.id,
-      amount: 1000,
-      resourceType: "SIGNUP" as const,
-      resourceId: "SIGNUP",
-    },
-  });
+
+  try {
+    // 포인트 히스토리 생성 시 오류 처리
+    await prisma.pointHistory.create({
+      data: {
+        pointId: point.id,
+        amount: 1000,
+        resourceType: "SIGNUP", // 문자열로 전달
+        resourceId: "SIGNUP",
+      },
+    });
+  } catch (error) {
+    console.error("포인트 히스토리 생성 오류:", error);
+    // 오류가 발생해도 회원가입 과정은 계속 진행
+  }
 
   return {
     status: 201,
