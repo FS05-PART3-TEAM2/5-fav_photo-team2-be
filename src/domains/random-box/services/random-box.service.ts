@@ -148,6 +148,14 @@ export const drawBox = async (userId: string, userPick: number) => {
           points: point,
         },
       });
+      await prisma.pointHistory.create({
+        data: {
+          pointId: userId,
+          amount: point,
+          resourceType: "RANDOM_BOX",
+          resourceId: "RANDOM_BOX",
+        },
+      });
     }
 
     await tx.randomBoxDraw.create({
