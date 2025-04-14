@@ -28,21 +28,9 @@ router.get("/me/count", authenticate, requestHandler(getMyPhotocardsCount));
 // 포토카드 생성 라우트
 router.post(
   "/",
-  (req, res, next) => {
-    console.log("포토카드 생성 라우트");
-    next();
-  },
-  authenticate,
-  (req, res, next) => {
-    console.log("인증 완료");
-    next();
-  },
-  upload.single("image"),
-  (req, res, next) => {
-    console.log("파일 파싱 완료");
-    next();
-  },
-  requestHandler(createPhotocard)
+  authenticate, // 인증 미들웨어
+  upload.single("image"), // 파일 업로드 (req.file 생성)
+  requestHandler(createPhotocard) // 실제 서비스 실행
 );
 
 //내 포토카드 상세조회

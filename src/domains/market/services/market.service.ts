@@ -25,31 +25,94 @@ import {
  * @returns
  */
 const getMarketList: GetMarketList = async (queries) => {
-  const { keyword, genre, grade, cursor, limit = 15 } = queries;
+  const {
+    keyword,
+    genre,
+    grade,
+    status,
+    cursor,
+    sort = "recent",
+    limit = 15,
+  } = queries;
+
+  const getCursorCondition = () => {
+    if (!cursor) return {};
+
+    switch (sort) {
+      case "recent":
+        return {
+          OR: [
+            { createdAt: { lt: cursor.createdAt } },
+            {
+              createdAt: cursor.createdAt,
+              id: { lt: cursor.id },
+            },
+          ],
+        };
+      case "old":
+        return {
+          OR: [
+            { createdAt: { gt: cursor.createdAt } },
+            {
+              createdAt: cursor.createdAt,
+              id: { gt: cursor.id },
+            },
+          ],
+        };
+      case "cheap":
+        return {
+          OR: [
+            { price: { gt: cursor.price || 0 } },
+            {
+              price: cursor.price || 0,
+              id: { gt: cursor.id },
+            },
+          ],
+        };
+      case "expensive":
+        return {
+          OR: [
+            { price: { lt: cursor.price || 0 } },
+            {
+              price: cursor.price || 0,
+              id: { lt: cursor.id },
+            },
+          ],
+        };
+      default:
+        return {
+          OR: [
+            { createdAt: { lt: cursor.createdAt } },
+            {
+              createdAt: cursor.createdAt,
+              id: { lt: cursor.id },
+            },
+          ],
+        };
+    }
+  };
 
   const saleCards: MarketCardDto[] = await prisma.saleCard.findMany({
     where: {
       AND: [
-        cursor
-          ? {
-              OR: [
-                { createdAt: { lt: cursor.createdAt } },
-                {
-                  createdAt: cursor.createdAt,
-                  id: { lt: cursor.id },
-                },
-              ],
-            }
-          : {},
+        getCursorCondition(),
         {
           photoCard: {
             AND: [
               keyword
                 ? {
                     OR: [
-                      { name: { contains: keyword, mode: "insensitive" } },
                       {
-                        description: { contains: keyword, mode: "insensitive" },
+                        name: {
+                          contains: keyword,
+                          mode: "insensitive" as const,
+                        },
+                      },
+                      {
+                        description: {
+                          contains: keyword,
+                          mode: "insensitive" as const,
+                        },
                       },
                     ],
                   }
@@ -60,14 +123,25 @@ const getMarketList: GetMarketList = async (queries) => {
           },
         },
         {
-          status: {
+          status: status || {
             in: ["ON_SALE", "SOLD_OUT"],
           },
         },
       ],
     },
     take: limit,
-    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    orderBy: [
+      sort === "recent"
+        ? { createdAt: "desc" }
+        : sort === "old"
+        ? { createdAt: "asc" }
+        : sort === "cheap"
+        ? { price: "asc" }
+        : sort === "expensive"
+        ? { price: "desc" }
+        : { createdAt: "desc" },
+      { id: "desc" },
+    ],
     include: {
       seller: { select: { id: true, nickname: true } },
       userPhotoCard: { select: { quantity: true } },
@@ -158,6 +232,7 @@ const getMarketList: GetMarketList = async (queries) => {
     ? {
         createdAt: saleCards[data.length - 1].createdAt.toISOString(),
         id: saleCards[data.length - 1].id,
+        price: saleCards[data.length - 1].price,
       }
     : null;
 
@@ -261,6 +336,9 @@ const getMarketMe: GetMarketMeList = async (queries, user) => {
 
   // console.log(JSON.stringify(marketOffers, null, 2));
 
+  /**
+   * 거래 수량 누적 조회
+   */
   const saleCardIds = marketOffers
     .filter((offer) => offer.type === "SALE" && offer.saleCardId) // null 제거
     .map((offer) => offer.saleCardId as string); // 타입 확정

@@ -11,4 +11,5 @@ export interface MarketOfferDto {
   exchangeOfferId: string | null;
   saleCard: saleCardDto | null;
   exchangeOffer: ExchangeOfferDto | null;
+  totalTradedQuantity?: number;
 }

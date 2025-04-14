@@ -10,7 +10,16 @@ export const MarketListQuerySchema = z.object({
     .string()
     .optional()
     .transform((v) => (v ? parseInt(v, 10) : undefined)),
-  cursor: z.object({ id: z.string(), createdAt: z.string() }).optional(),
+  cursor: z
+    .object({
+      id: z.string(),
+      createdAt: z.string(),
+      price: z
+        .string()
+        .optional()
+        .transform((v) => (v ? parseInt(v, 10) : undefined)),
+    })
+    .optional(),
 });
 
 export const MarketMeQuerySchema = z.object({
