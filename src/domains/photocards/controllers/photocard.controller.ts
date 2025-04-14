@@ -78,13 +78,8 @@ export const createPhotocard: ApiSignature = async (req, res) => {
     throw new CustomError("이미지 파일이 필요합니다.", 400);
   }
 
-  console.log("body", body);
-  console.log("file", file);
-
   // file을 cloudinary에 업로드
   const { imageUrl, publicId } = await uploadToCloudinary(file.buffer);
-
-  console.log("imageUrl", imageUrl);
 
   const response = await photocardService.createPhotocard(
     body,
