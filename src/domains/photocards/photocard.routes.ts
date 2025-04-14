@@ -28,8 +28,8 @@ router.get("/me/count", authenticate, requestHandler(getMyPhotocardsCount));
 // 포토카드 생성 라우트
 router.post(
   "/",
-  upload.single("image"), // 파일 업로드 (req.file 생성)
   authenticate, // 인증 미들웨어
+  upload.single("image"), // 파일 업로드 (req.file 생성)
   requestHandler(createPhotocard) // 실제 서비스 실행
 );
 
