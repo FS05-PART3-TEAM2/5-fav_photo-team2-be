@@ -336,6 +336,9 @@ const getMarketMe: GetMarketMeList = async (queries, user) => {
 
   // console.log(JSON.stringify(marketOffers, null, 2));
 
+  /**
+   * 거래 수량 누적 조회
+   */
   const saleCardIds = marketOffers
     .filter((offer) => offer.type === "SALE" && offer.saleCardId) // null 제거
     .map((offer) => offer.saleCardId as string); // 타입 확정

@@ -12,7 +12,6 @@ export interface saleCardDto {
   exchangeGenre: string;
   createdAt: Date; // ISO string이므로 Date로 쓸 수도 있음
   updatedAt: Date;
-  totalTradedQuantity?: number;
   seller?: UserDto;
   photoCard?: PhotoCardDto;
   userPhotoCard?: UserPhotoCardDto;

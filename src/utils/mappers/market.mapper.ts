@@ -47,8 +47,7 @@ export const toMarketMeResponse = (card: MarketOfferDto): MarketMeResponse => {
         grade: card.saleCard.photoCard!.grade,
         price: card.saleCard.price,
         image: card.saleCard.photoCard!.imageUrl,
-        remaining:
-          card.saleCard.quantity - (card.saleCard.totalTradedQuantity || 0),
+        remaining: card.saleCard.quantity - (card.totalTradedQuantity || 0),
         total: card.saleCard.quantity,
         creator: {
           id: card.saleCard.photoCard!.creator.id,
